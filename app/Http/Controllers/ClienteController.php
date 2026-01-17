@@ -7,6 +7,7 @@ use App\DTOs\UpdateClienteDTO;
 use App\Http\Requests\StoreClienteRequest;
 use App\Http\Requests\UpdateClienteRequest;
 use App\Models\Cliente;
+use App\Services\AuditService;
 use App\Services\ClienteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,8 @@ use Illuminate\Http\Request;
 class ClienteController extends Controller
 {
     public function __construct(
-        private ClienteService $clienteService
+        private ClienteService $clienteService,
+        private AuditService $auditService
     ) {
     }
 
@@ -23,6 +25,8 @@ class ClienteController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Cliente::class);
+
         $perPage = (int) $request->get('per_page', 15);
         $clientes = $this->clienteService->listar($perPage);
 
@@ -48,6 +52,9 @@ class ClienteController extends Controller
             $dto = CreateClienteDTO::fromArray($request->validated());
             $cliente = $this->clienteService->criar($dto);
 
+            // Log de auditoria
+            $this->auditService->logCreate($cliente, auth()->user(), $request);
+
             return response()->json([
                 'success' => true,
                 'status_code' => 201,
@@ -69,6 +76,11 @@ class ClienteController extends Controller
      */
     public function show(Cliente $cliente): JsonResponse
     {
+        $this->authorize('view', $cliente);
+
+        // Log de auditoria
+        $this->auditService->logView($cliente, auth()->user(), request());
+
         return response()->json([
             'success' => true,
             'status_code' => 200,
@@ -82,9 +94,13 @@ class ClienteController extends Controller
     public function update(UpdateClienteRequest $request, Cliente $cliente): JsonResponse
     {
         try {
+            $oldValues = $cliente->getAttributes();
             $dto = UpdateClienteDTO::fromArray($request->validated());
             $this->clienteService->atualizar($cliente, $dto);
             $cliente->refresh();
+
+            // Log de auditoria
+            $this->auditService->logUpdate($cliente, $oldValues, auth()->user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -107,7 +123,12 @@ class ClienteController extends Controller
      */
     public function destroy(Cliente $cliente): JsonResponse
     {
+        $this->authorize('delete', $cliente);
+
         try {
+            // Log de auditoria antes de deletar
+            $this->auditService->logDelete($cliente, auth()->user(), request());
+
             $this->clienteService->excluir($cliente);
 
             return response()->json([

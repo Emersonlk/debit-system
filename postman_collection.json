@@ -582,6 +582,250 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Permissões",
+			"item": [
+				{
+					"name": "Minhas Permissões",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/minhas",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "minhas"]
+						},
+						"description": "Retorna as permissões e roles do usuário autenticado"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Todos os Usuários",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/usuarios",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "usuarios"]
+						},
+						"description": "Lista todos os usuários com suas roles e permissões (apenas admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar Permissões de um Usuário",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/usuarios/2",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "usuarios", "2"]
+						},
+						"description": "Mostra as permissões detalhadas de um usuário específico (admin ou o próprio usuário)"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Todas as Roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/roles",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "roles"]
+						},
+						"description": "Lista todas as roles disponíveis com suas permissões (apenas admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Todas as Permissões",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/permissoes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "permissoes"]
+						},
+						"description": "Lista todas as permissões disponíveis no sistema (apenas admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Atribuir Role a um Usuário",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/usuarios/2/role",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "usuarios", "2", "role"]
+						},
+						"description": "Atribui uma role (admin, operador) a um usuário (apenas admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Role de um Usuário",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"role\": \"operador\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/usuarios/2/role",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "usuarios", "2", "role"]
+						},
+						"description": "Remove uma role de um usuário (apenas admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Atribuir Permissão Direta a um Usuário",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"permission\": \"clientes.deletar\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/usuarios/2/permissao",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "usuarios", "2", "permissao"]
+						},
+						"description": "Atribui uma permissão direta a um usuário (apenas admin)"
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Permissão Direta de um Usuário",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"permission\": \"clientes.deletar\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/permissoes/usuarios/2/permissao",
+							"host": ["{{base_url}}"],
+							"path": ["api", "permissoes", "usuarios", "2", "permissao"]
+						},
+						"description": "Remove uma permissão direta de um usuário (apenas admin)"
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [

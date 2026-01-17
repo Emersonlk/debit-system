@@ -12,7 +12,8 @@ class UpdatePromissoriaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $promissoria = $this->route('promissoria');
+        return $this->user()->can('update', $promissoria);
     }
 
     /**

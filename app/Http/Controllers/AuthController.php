@@ -27,11 +27,21 @@ class AuthController extends Controller
         
         $token = $user->createToken('api-token')->plainTextToken;
 
+        $roles = $user->roles->pluck('name');
+        $permissions = $user->getAllPermissions()->pluck('name');
+
         return response()->json([
             'success' => true,
             'status_code' => 200,
             'message' => 'Login realizado com sucesso',
-            'token'   => $token
+            'token'   => $token,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $roles,
+                'permissions' => $permissions,
+            ]
         ], 200);
     }
 

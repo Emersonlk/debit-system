@@ -8,6 +8,7 @@ use App\Enums\PromissoriaStatus;
 use App\Http\Requests\StorePromissoriaRequest;
 use App\Http\Requests\UpdatePromissoriaRequest;
 use App\Models\Promissoria;
+use App\Services\AuditService;
 use App\Services\PromissoriaService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,8 @@ use Illuminate\Http\Request;
 class PromissoriaController extends Controller
 {
     public function __construct(
-        private PromissoriaService $promissoriaService
+        private PromissoriaService $promissoriaService,
+        private AuditService $auditService
     ) {
     }
 
@@ -25,6 +27,8 @@ class PromissoriaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Promissoria::class);
+
         $perPage = (int) $request->get('per_page', 15);
         
         $filtros = [];
@@ -66,6 +70,9 @@ class PromissoriaController extends Controller
             $dto = CreatePromissoriaDTO::fromArray($request->validated());
             $promissoria = $this->promissoriaService->criar($dto);
 
+            // Log de auditoria
+            $this->auditService->logCreate($promissoria, auth()->user(), $request);
+
             return response()->json([
                 'success' => true,
                 'status_code' => 201,
@@ -87,8 +94,13 @@ class PromissoriaController extends Controller
      */
     public function show(Promissoria $promissoria): JsonResponse
     {
+        $this->authorize('view', $promissoria);
+
         // O ModelNotFoundException será tratado automaticamente pelo exception handler
         $promissoria = $this->promissoriaService->buscarPorId($promissoria->id);
+
+        // Log de auditoria
+        $this->auditService->logView($promissoria, auth()->user(), request());
 
         return response()->json([
             'success' => true,
@@ -103,9 +115,13 @@ class PromissoriaController extends Controller
     public function update(UpdatePromissoriaRequest $request, Promissoria $promissoria): JsonResponse
     {
         try {
+            $oldValues = $promissoria->getAttributes();
             $dto = UpdatePromissoriaDTO::fromArray($request->validated());
             $this->promissoriaService->atualizar($promissoria, $dto);
             $promissoria->refresh();
+
+            // Log de auditoria
+            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -128,7 +144,12 @@ class PromissoriaController extends Controller
      */
     public function destroy(Promissoria $promissoria): JsonResponse
     {
+        $this->authorize('delete', $promissoria);
+
         try {
+            // Log de auditoria antes de deletar
+            $this->auditService->logDelete($promissoria, auth()->user(), request());
+
             $this->promissoriaService->excluir($promissoria);
 
             return response()->json([
@@ -151,6 +172,8 @@ class PromissoriaController extends Controller
      */
     public function marcarComoPaga(Promissoria $promissoria): JsonResponse
     {
+        $this->authorize('markAsPaid', $promissoria);
+
         try {
             // Verifica se já está paga antes de chamar o service
             if ($promissoria->status === PromissoriaStatus::PAGA) {
@@ -162,8 +185,12 @@ class PromissoriaController extends Controller
                 ], 422);
             }
 
+            $oldValues = $promissoria->getAttributes();
             $this->promissoriaService->marcarComoPaga($promissoria);
             $promissoria->refresh();
+
+            // Log de auditoria
+            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), request());
 
             return response()->json([
                 'success' => true,
@@ -189,6 +216,8 @@ class PromissoriaController extends Controller
      */
     public function resumoVencimento(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Promissoria::class);
+
         $dias = (int) $request->get('dias', 3);
         $resumo = $this->promissoriaService->obterResumoVencimento($dias);
 
