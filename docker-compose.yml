@@ -1,0 +1,13 @@
+services:
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: debit-system-mailhog
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+    networks:
+      - debit-system-network
+
+networks:
+  debit-system-network:
+    driver: bridge

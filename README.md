@@ -1,59 +1,161 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema de Gestão de Promissórias
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema desenvolvido em Laravel para gerenciar vendas com promissórias, permitindo o controle de clientes, valores, datas de vencimento e envio automático de notificações por email quando as promissórias estão próximas do vencimento.
 
-## About Laravel
+## 📋 Funcionalidades
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Gestão de Clientes**: CRUD completo de clientes com validação de CPF
+- **Gestão de Promissórias**: 
+  - Cadastro de promissórias vinculadas a clientes
+  - Controle de status (pendente, paga, vencida)
+  - Filtros por status, cliente, vencidas e próximas do vencimento
+- **Notificações Automáticas**: 
+  - Envio automático de emails quando promissórias estão próximas do vencimento (3 dias antes por padrão)
+  - Comando agendado que roda diariamente às 8h
+- **API RESTful**: Endpoints completos para integração com frontend
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Instalação
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Clone o repositório
+2. Instale as dependências:
+```bash
+composer install
+```
 
-## Learning Laravel
+3. Configure o arquivo `.env`:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+4. Configure o banco de dados no `.env` (SQLite por padrão):
+```env
+DB_CONNECTION=sqlite
+# ou configure MySQL/PostgreSQL
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+5. Execute as migrations:
+```bash
+php artisan migrate
+```
 
-## Laravel Sponsors
+6. Configure o email no `.env` (para envio de notificações):
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=seu-email@gmail.com
+MAIL_PASSWORD=sua-senha
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=seu-email@gmail.com
+MAIL_FROM_NAME="Sistema de Promissórias"
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Nota**: Para testes, você pode usar `MAIL_MAILER=log` para ver os emails nos logs.
 
-### Premium Partners
+## 📡 Endpoints da API
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Autenticação
+- `POST /api/login` - Login e obtenção de token
+- `POST /api/logout` - Logout (requer autenticação)
 
-## Contributing
+**Credenciais de teste:**
+- Email: `test@example.com`
+- Senha: `password123`
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+> Para criar o usuário de teste, execute: `php artisan db:seed --class=UserSeeder`
 
-## Code of Conduct
+### Clientes
+- `GET /api/clientes` - Listar clientes (com paginação)
+- `POST /api/clientes` - Criar cliente
+- `GET /api/clientes/{id}` - Exibir cliente
+- `PUT /api/clientes/{id}` - Atualizar cliente
+- `DELETE /api/clientes/{id}` - Remover cliente
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Promissórias
+- `GET /api/promissorias` - Listar promissórias
+  - Query params: `status`, `cliente_id`, `vencidas`, `proximas_vencimento`, `dias`, `per_page`
+- `POST /api/promissorias` - Criar promissória
+- `GET /api/promissorias/{id}` - Exibir promissória
+- `PUT /api/promissorias/{id}` - Atualizar promissória
+- `DELETE /api/promissorias/{id}` - Remover promissória
+- `POST /api/promissorias/{id}/marcar-como-paga` - Marcar promissória como paga
 
-## Security Vulnerabilities
+## 📧 Notificações
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+O sistema envia automaticamente emails quando promissórias estão próximas do vencimento. O comando é executado diariamente às 8h (horário de Brasília).
 
-## License
+### Executar manualmente
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Para testar ou executar manualmente a verificação de vencimentos:
+
+```bash
+php artisan promissorias:verificar-vencimento
+```
+
+Para verificar com um número diferente de dias:
+
+```bash
+php artisan promissorias:verificar-vencimento --dias=5
+```
+
+### Configurar agendamento
+
+O agendamento já está configurado em `routes/console.php`. Para que funcione em produção, você precisa configurar o agendador de tarefas do sistema:
+
+**Linux/Mac (Cron)**:
+```bash
+* * * * * cd /caminho/do/projeto && php artisan schedule:run >> /dev/null 2>&1
+```
+
+**Windows (Task Scheduler)**:
+Configure uma tarefa agendada para executar:
+```
+php artisan schedule:run
+```
+
+## 🧪 Testes
+
+Execute os testes com:
+
+```bash
+php artisan test
+```
+
+## 📝 Exemplo de Uso
+
+### Criar uma promissória
+
+```json
+POST /api/promissorias
+{
+  "cliente_id": 1,
+  "valor": 500.00,
+  "data_vencimento": "2026-01-20",
+  "observacoes": "Venda de produtos diversos"
+}
+```
+
+### Filtrar promissórias próximas do vencimento
+
+```
+GET /api/promissorias?proximas_vencimento=1&dias=3
+```
+
+### Filtrar promissórias vencidas
+
+```
+GET /api/promissorias?vencidas=1
+```
+
+## 🔧 Tecnologias Utilizadas
+
+- Laravel 12
+- Laravel Sanctum (Autenticação API)
+- SQLite (pode ser alterado para MySQL/PostgreSQL)
+- Sistema de Notificações do Laravel
+- Agendamento de Tarefas (Task Scheduling)
+
+## 📄 Licença
+
+Este projeto é open-source e está disponível sob a licença MIT.

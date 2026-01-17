@@ -1,0 +1,599 @@
+{
+	"info": {
+		"_postman_id": "debit-system-api",
+		"name": "Sistema de Gestão de Promissórias",
+		"description": "Coleção completa da API do Sistema de Gestão de Promissórias",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Adiciona automaticamente o token em todas as requisições (exceto login)",
+					"var requestUrl = pm.request.url.toString();",
+					"if (!requestUrl.includes('/api/login')) {",
+					"    var token = pm.environment.get('token') || pm.collectionVariables.get('token');",
+					"    if (token) {",
+					"        // Verifica se já existe o header Authorization",
+					"        var authHeader = pm.request.headers.get('Authorization');",
+					"        if (!authHeader) {",
+					"            pm.request.headers.add({",
+					"                key: 'Authorization',",
+					"                value: 'Bearer ' + token",
+					"            });",
+					"        } else {",
+					"            // Atualiza o header existente",
+					"            pm.request.headers.upsert({",
+					"                key: 'Authorization',",
+					"                value: 'Bearer ' + token",
+					"            });",
+					"        }",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Autenticação",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        // Salva o token na variável de ambiente (se existir)",
+									"        if (pm.environment) {",
+									"            pm.environment.set(\"token\", jsonData.token);",
+									"        }",
+									"        // Salva o token na variável de coleção (sempre funciona)",
+									"        pm.collectionVariables.set(\"token\", jsonData.token);",
+									"        console.log(\"✅ Token salvo com sucesso!\");",
+									"        console.log(\"Token: \" + jsonData.token.substring(0, 20) + \"...\");",
+									"    } else {",
+									"        console.log(\"❌ Token não encontrado na resposta\");",
+									"    }",
+									"} else {",
+									"    console.log(\"❌ Erro no login: \" + pm.response.code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "login"]
+						},
+						"description": "Realiza login e obtém token de autenticação"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "logout"]
+						},
+						"description": "Realiza logout e invalida o token"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Clientes",
+			"item": [
+				{
+					"name": "Listar Clientes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/clientes?per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["api", "clientes"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Itens por página (padrão: 15)"
+								}
+							]
+						},
+						"description": "Lista todos os clientes com paginação"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Cliente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"João Silva\",\n    \"cpf\": \"11144477735\",\n    \"email\": \"joao@example.com\",\n    \"telefone\": \"11999999999\",\n    \"endereco\": \"Rua Teste, 123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/clientes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "clientes"]
+						},
+						"description": "Cria um novo cliente"
+					},
+					"response": []
+				},
+				{
+					"name": "Exibir Cliente",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/clientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "clientes", "1"]
+						},
+						"description": "Exibe um cliente específico pelo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Cliente",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nome\": \"João Silva Santos\",\n    \"telefone\": \"11988888888\",\n    \"endereco\": \"Rua Teste Atualizada, 456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/clientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "clientes", "1"]
+						},
+						"description": "Atualiza um cliente existente"
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Cliente",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/clientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "clientes", "1"]
+						},
+						"description": "Remove um cliente"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Promissórias",
+			"item": [
+				{
+					"name": "Listar Promissórias",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias?per_page=15",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "15",
+									"description": "Itens por página"
+								}
+							]
+						},
+						"description": "Lista todas as promissórias"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Promissórias - Filtro por Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias?status=pendente",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias"],
+							"query": [
+								{
+									"key": "status",
+									"value": "pendente",
+									"description": "Status: pendente, paga ou vencida"
+								}
+							]
+						},
+						"description": "Lista promissórias filtradas por status"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Promissórias - Filtro por Cliente",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias?cliente_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias"],
+							"query": [
+								{
+									"key": "cliente_id",
+									"value": "1",
+									"description": "ID do cliente"
+								}
+							]
+						},
+						"description": "Lista promissórias de um cliente específico"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Promissórias Vencidas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias?vencidas=1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias"],
+							"query": [
+								{
+									"key": "vencidas",
+									"value": "1",
+									"description": "Filtrar apenas vencidas"
+								}
+							]
+						},
+						"description": "Lista apenas promissórias vencidas"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Promissórias Próximas do Vencimento",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias?proximas_vencimento=1&dias=3",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias"],
+							"query": [
+								{
+									"key": "proximas_vencimento",
+									"value": "1",
+									"description": "Filtrar próximas do vencimento"
+								},
+								{
+									"key": "dias",
+									"value": "3",
+									"description": "Número de dias antes do vencimento (padrão: 3)"
+								}
+							]
+						},
+						"description": "Lista promissórias que vencem nos próximos X dias"
+					},
+					"response": []
+				},
+				{
+					"name": "Resumo de Vencimentos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias/resumo/vencimento?dias=3",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias", "resumo", "vencimento"],
+							"query": [
+								{
+									"key": "dias",
+									"value": "3",
+									"description": "Número de dias antes do vencimento (padrão: 3)"
+								}
+							]
+						},
+						"description": "Retorna resumo completo com estatísticas de promissórias próximas do vencimento e vencidas"
+					},
+					"response": []
+				},
+				{
+					"name": "Criar Promissória",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cliente_id\": 1,\n    \"valor\": 500.00,\n    \"data_vencimento\": \"2026-01-20\",\n    \"observacoes\": \"Venda de produtos diversos para supermercado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/promissorias",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias"]
+						},
+						"description": "Cria uma nova promissória"
+					},
+					"response": []
+				},
+				{
+					"name": "Exibir Promissória",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias", "1"]
+						},
+						"description": "Exibe uma promissória específica pelo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Promissória",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"valor\": 600.00,\n    \"data_vencimento\": \"2026-01-25\",\n    \"observacoes\": \"Valor atualizado\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/promissorias/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias", "1"]
+						},
+						"description": "Atualiza uma promissória existente"
+					},
+					"response": []
+				},
+				{
+					"name": "Marcar Promissória como Paga",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias/1/marcar-como-paga",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias", "1", "marcar-como-paga"]
+						},
+						"description": "Marca uma promissória como paga automaticamente"
+					},
+					"response": []
+				},
+				{
+					"name": "Remover Promissória",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/promissorias/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "promissorias", "1"]
+						},
+						"description": "Remove uma promissória"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

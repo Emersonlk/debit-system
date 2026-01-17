@@ -2,64 +2,126 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\CreateClienteDTO;
+use App\DTOs\UpdateClienteDTO;
 use App\Http\Requests\StoreClienteRequest;
+use App\Http\Requests\UpdateClienteRequest;
 use App\Models\Cliente;
+use App\Services\ClienteService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ClienteController extends Controller
 {
-    public function index()
-    {
-        return response()->json(Cliente::all());
+    public function __construct(
+        private ClienteService $clienteService
+    ) {
     }
 
-    public function store(StoreClienteRequest $request)
+    /**
+     * Lista todos os clientes com paginação
+     */
+    public function index(Request $request): JsonResponse
     {
-        $cliente = Cliente::create($request->validated());
+        $perPage = (int) $request->get('per_page', 15);
+        $clientes = $this->clienteService->listar($perPage);
 
         return response()->json([
-            'message' => 'Cliente criado com sucesso',
-            'data'    => $cliente
-        ], 201);
+            'success' => true,
+            'status_code' => 200,
+            'data' => $clientes->items(),
+            'meta' => [
+                'current_page' => $clientes->currentPage(),
+                'per_page' => $clientes->perPage(),
+                'total' => $clientes->total(),
+                'last_page' => $clientes->lastPage(),
+            ]
+        ], 200);
     }
 
-    public function show($id)
+    /**
+     * Cria um novo cliente
+     */
+    public function store(StoreClienteRequest $request): JsonResponse
     {
-        $cliente = Cliente::find($id);
+        try {
+            $dto = CreateClienteDTO::fromArray($request->validated());
+            $cliente = $this->clienteService->criar($dto);
 
-        if (!$cliente) {
-            return response()->json(['message' => 'Cliente não encontrado'], 404);
+            return response()->json([
+                'success' => true,
+                'status_code' => 201,
+                'message' => 'Cliente criado com sucesso',
+                'data' => $cliente
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status_code' => 500,
+                'message' => 'Erro ao criar cliente',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json($cliente);
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Exibe um cliente específico
+     */
+    public function show(Cliente $cliente): JsonResponse
     {
-        $cliente = Cliente::find($id);
-
-        if (!$cliente) {
-            return response()->json(['message' => 'Cliente não encontrado'], 404);
-        }
-
-        $cliente->update($request->all());
-
         return response()->json([
-            'message' => 'Cliente atualizado com sucesso',
-            'data'    => $cliente
-        ]);
+            'success' => true,
+            'status_code' => 200,
+            'data' => $cliente
+        ], 200);
     }
 
-    public function destroy($id)
+    /**
+     * Atualiza um cliente existente
+     */
+    public function update(UpdateClienteRequest $request, Cliente $cliente): JsonResponse
     {
-        $cliente = Cliente::find($id);
+        try {
+            $dto = UpdateClienteDTO::fromArray($request->validated());
+            $this->clienteService->atualizar($cliente, $dto);
+            $cliente->refresh();
 
-        if (!$cliente) {
-            return response()->json(['message' => 'Cliente não encontrado'], 404);
+            return response()->json([
+                'success' => true,
+                'status_code' => 200,
+                'message' => 'Cliente atualizado com sucesso',
+                'data' => $cliente
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status_code' => 500,
+                'message' => 'Erro ao atualizar cliente',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        $cliente->delete();
+    /**
+     * Remove um cliente
+     */
+    public function destroy(Cliente $cliente): JsonResponse
+    {
+        try {
+            $this->clienteService->excluir($cliente);
 
-        return response()->json(['message' => 'Cliente removido com sucesso']);
+            return response()->json([
+                'success' => true,
+                'status_code' => 200,
+                'message' => 'Cliente removido com sucesso'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'status_code' => 500,
+                'message' => 'Erro ao remover cliente',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
