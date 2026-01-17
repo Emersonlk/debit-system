@@ -41,7 +41,9 @@ class StoreClienteRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json([
             'success' => false,
-            'errors'  => $validator->errors()
+            'status_code' => 422,
+            'message' => 'Erro de validação',
+            'errors' => $validator->errors()
         ], 422));
     }
 }

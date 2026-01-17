@@ -2,13 +2,15 @@
 
 namespace App\DTOs;
 
+use App\Enums\PromissoriaStatus;
+
 class CreatePromissoriaDTO
 {
     public function __construct(
         public int $cliente_id,
         public float $valor,
         public string $data_vencimento,
-        public string $status = 'pendente',
+        public string $status = PromissoriaStatus::PENDENTE->value,
         public ?string $observacoes = null
     ) {
     }
@@ -30,7 +32,7 @@ class CreatePromissoriaDTO
             cliente_id: $data['cliente_id'],
             valor: $data['valor'],
             data_vencimento: $data['data_vencimento'],
-            status: $data['status'] ?? 'pendente',
+            status: $data['status'] ?? PromissoriaStatus::PENDENTE->value,
             observacoes: $data['observacoes'] ?? null
         );
     }

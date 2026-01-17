@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PromissoriaStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,6 +28,7 @@ class Promissoria extends Model
         'data_vencimento' => 'date',
         'data_pagamento' => 'datetime',
         'notificado' => 'boolean',
+        'status' => PromissoriaStatus::class,
     ];
 
     /**
@@ -45,7 +47,7 @@ class Promissoria extends Model
         $dataLimite = now()->addDays($diasAntes);
         return $this->data_vencimento->lte($dataLimite) 
             && $this->data_vencimento->gte(now())
-            && $this->status === 'pendente';
+            && $this->status === PromissoriaStatus::PENDENTE;
     }
 
     /**
@@ -53,7 +55,7 @@ class Promissoria extends Model
      */
     public function estaVencida(): bool
     {
-        return $this->data_vencimento->lt(now()) && $this->status === 'pendente';
+        return $this->data_vencimento->lt(now()) && $this->status === PromissoriaStatus::PENDENTE;
     }
 
     /**
@@ -62,7 +64,7 @@ class Promissoria extends Model
     public function marcarComoPaga(): bool
     {
         return $this->update([
-            'status' => 'paga',
+            'status' => PromissoriaStatus::PAGA,
             'data_pagamento' => now(),
         ]);
     }

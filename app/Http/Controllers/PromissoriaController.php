@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\DTOs\CreatePromissoriaDTO;
 use App\DTOs\UpdatePromissoriaDTO;
+use App\Enums\PromissoriaStatus;
 use App\Http\Requests\StorePromissoriaRequest;
 use App\Http\Requests\UpdatePromissoriaRequest;
 use App\Models\Promissoria;
@@ -152,7 +153,7 @@ class PromissoriaController extends Controller
     {
         try {
             // Verifica se já está paga antes de chamar o service
-            if ($promissoria->status === 'paga') {
+            if ($promissoria->status === PromissoriaStatus::PAGA) {
                 return response()->json([
                     'success' => false,
                     'status_code' => 422,

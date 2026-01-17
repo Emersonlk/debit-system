@@ -58,12 +58,16 @@ class ClienteControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
+                'status_code',
                 'data' => [
                     '*' => ['id', 'nome', 'cpf', 'email', 'telefone', 'endereco', 'created_at', 'updated_at']
                 ],
                 'meta' => ['current_page', 'per_page', 'total', 'last_page']
             ])
-            ->assertJson(['success' => true]);
+            ->assertJson([
+                'success' => true,
+                'status_code' => 200
+            ]);
 
         $this->assertCount(15, $response->json('data')); // Padrão é 15 por página
     }
@@ -102,11 +106,13 @@ class ClienteControllerTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonStructure([
                 'success',
+                'status_code',
                 'message',
                 'data' => ['id', 'nome', 'cpf', 'email', 'telefone', 'endereco']
             ])
             ->assertJson([
                 'success' => true,
+                'status_code' => 201,
                 'message' => 'Cliente criado com sucesso',
             ]);
 
@@ -127,9 +133,14 @@ class ClienteControllerTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonStructure([
                 'success',
+                'status_code',
+                'message',
                 'errors'
             ])
-            ->assertJson(['success' => false]);
+            ->assertJson([
+                'success' => false,
+                'status_code' => 422
+            ]);
     }
 
     /**
@@ -188,10 +199,12 @@ class ClienteControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
+                'status_code',
                 'data' => ['id', 'nome', 'cpf', 'email', 'telefone', 'endereco']
             ])
             ->assertJson([
                 'success' => true,
+                'status_code' => 200,
                 'data' => [
                     'id' => $cliente->id,
                     'nome' => $cliente->nome,
@@ -208,7 +221,16 @@ class ClienteControllerTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->getJson('/api/clientes/99999');
 
-        $response->assertStatus(404);
+        $response->assertStatus(404)
+            ->assertJsonStructure([
+                'success',
+                'status_code',
+                'message'
+            ])
+            ->assertJson([
+                'success' => false,
+                'status_code' => 404
+            ]);
     }
 
     /**
@@ -232,11 +254,13 @@ class ClienteControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
+                'status_code',
                 'message',
                 'data'
             ])
             ->assertJson([
                 'success' => true,
+                'status_code' => 200,
                 'message' => 'Cliente atualizado com sucesso',
             ]);
 
@@ -320,10 +344,12 @@ class ClienteControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'success',
+                'status_code',
                 'message'
             ])
             ->assertJson([
                 'success' => true,
+                'status_code' => 200,
                 'message' => 'Cliente removido com sucesso',
             ]);
 
@@ -338,7 +364,16 @@ class ClienteControllerTest extends TestCase
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->deleteJson('/api/clientes/99999');
 
-        $response->assertStatus(404);
+        $response->assertStatus(404)
+            ->assertJsonStructure([
+                'success',
+                'status_code',
+                'message'
+            ])
+            ->assertJson([
+                'success' => false,
+                'status_code' => 404
+            ]);
     }
 
     /**

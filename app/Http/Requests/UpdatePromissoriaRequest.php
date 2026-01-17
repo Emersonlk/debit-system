@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PromissoriaStatus;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePromissoriaRequest extends FormRequest
@@ -25,7 +26,7 @@ class UpdatePromissoriaRequest extends FormRequest
             'cliente_id' => 'sometimes|exists:clientes,id',
             'valor' => 'sometimes|numeric|min:0.01',
             'data_vencimento' => 'sometimes|date',
-            'status' => 'sometimes|in:pendente,paga,vencida',
+            'status' => ['sometimes', 'in:' . PromissoriaStatus::valoresString()],
             'observacoes' => 'nullable|string|max:1000',
             'data_pagamento' => 'nullable|date',
         ];
@@ -43,7 +44,7 @@ class UpdatePromissoriaRequest extends FormRequest
             'valor.numeric' => 'O valor deve ser um número.',
             'valor.min' => 'O valor deve ser maior que zero.',
             'data_vencimento.date' => 'A data de vencimento deve ser uma data válida.',
-            'status.in' => 'O status deve ser: pendente, paga ou vencida.',
+            'status.in' => 'O status deve ser: ' . implode(', ', PromissoriaStatus::valores()) . '.',
         ];
     }
 }
