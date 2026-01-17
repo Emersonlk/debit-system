@@ -8,6 +8,8 @@ use App\Models\Promissoria;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class PromissoriaControllerTest extends TestCase
@@ -22,11 +24,43 @@ class PromissoriaControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Reset cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Criar roles e permissions
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $operadorRole = Role::firstOrCreate(['name' => 'operador']);
+
+        // Criar permissões
+        $permissions = [
+            'clientes.listar',
+            'clientes.visualizar',
+            'clientes.criar',
+            'clientes.editar',
+            'clientes.deletar',
+            'promissorias.listar',
+            'promissorias.visualizar',
+            'promissorias.criar',
+            'promissorias.editar',
+            'promissorias.deletar',
+            'promissorias.marcar-paga',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        // Atribuir todas as permissões ao admin
+        $adminRole->givePermissionTo(Permission::all());
+
         // Cria um usuário para autenticação
         $this->user = User::factory()->create([
             'email' => 'test@example.com',
             'password' => Hash::make('password123'),
         ]);
+
+        // Atribui role admin ao usuário de teste
+        $this->user->assignRole('admin');
 
         // Faz login e obtém o token
         $response = $this->postJson('/api/login', [
@@ -138,9 +172,17 @@ class PromissoriaControllerTest extends TestCase
      */
     public function test_index_filters_vencidas(): void
     {
+        // Cria 3 promissórias vencidas (status VENCIDA, data no passado)
         Promissoria::factory()->count(3)->vencida()->create();
+        
+        // Cria 2 promissórias pagas (não devem aparecer no filtro)
         Promissoria::factory()->count(2)->paga()->create();
-        Promissoria::factory()->count(4)->create();
+        
+        // Cria 4 promissórias pendentes com data futura (não devem aparecer no filtro)
+        Promissoria::factory()->count(4)->create([
+            'data_vencimento' => now()->addDays(10)->format('Y-m-d'),
+            'status' => PromissoriaStatus::PENDENTE->value,
+        ]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
             ->getJson('/api/promissorias?vencidas=1');
@@ -148,6 +190,18 @@ class PromissoriaControllerTest extends TestCase
         $response->assertStatus(200);
         $data = $response->json('data');
         $this->assertCount(3, $data);
+        
+        // Verifica que todas são vencidas
+        foreach ($data as $promissoria) {
+            $this->assertTrue(
+                in_array($promissoria['status'], [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value]),
+                'Todas as promissórias devem ter status PENDENTE ou VENCIDA'
+            );
+            $this->assertTrue(
+                \Carbon\Carbon::parse($promissoria['data_vencimento'])->lt(now()),
+                'Todas as promissórias devem ter data de vencimento no passado'
+            );
+        }
     }
 
     /**

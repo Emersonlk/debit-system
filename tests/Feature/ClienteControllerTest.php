@@ -6,6 +6,8 @@ use App\Models\Cliente;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ClienteControllerTest extends TestCase
@@ -19,11 +21,43 @@ class ClienteControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Reset cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Criar roles e permissions
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $operadorRole = Role::firstOrCreate(['name' => 'operador']);
+
+        // Criar permissões
+        $permissions = [
+            'clientes.listar',
+            'clientes.visualizar',
+            'clientes.criar',
+            'clientes.editar',
+            'clientes.deletar',
+            'promissorias.listar',
+            'promissorias.visualizar',
+            'promissorias.criar',
+            'promissorias.editar',
+            'promissorias.deletar',
+            'promissorias.marcar-paga',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        // Atribuir todas as permissões ao admin
+        $adminRole->givePermissionTo(Permission::all());
+
         // Cria um usuário para autenticação
         $this->user = User::factory()->create([
             'email' => 'test@example.com',
             'password' => Hash::make('password123'),
         ]);
+
+        // Atribui role admin ao usuário de teste
+        $this->user->assignRole('admin');
 
         // Faz login e obtém o token
         $response = $this->postJson('/api/login', [
