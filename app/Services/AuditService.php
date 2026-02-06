@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AuditService
 {
@@ -20,13 +21,13 @@ class AuditService
         ?User $user = null,
         ?Request $request = null
     ): AuditLog {
-        $user = $user ?? auth()->user();
+        $user = $user ?? Auth::user();
         $request = $request ?? request();
 
         return AuditLog::create([
             'user_id' => $user?->id,
             'action' => $action,
-            'model_type' => get_class($model),
+            'model_type' => $model::class,
             'model_id' => $model->id,
             'old_values' => $oldValues,
             'new_values' => $newValues,

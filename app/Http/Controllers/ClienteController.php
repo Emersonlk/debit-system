@@ -11,6 +11,7 @@ use App\Services\AuditService;
 use App\Services\ClienteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ClienteController extends Controller
 {
@@ -53,7 +54,7 @@ class ClienteController extends Controller
             $cliente = $this->clienteService->criar($dto);
 
             // Log de auditoria
-            $this->auditService->logCreate($cliente, auth()->user(), $request);
+            $this->auditService->logCreate($cliente, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -79,7 +80,7 @@ class ClienteController extends Controller
         $this->authorize('view', $cliente);
 
         // Log de auditoria
-        $this->auditService->logView($cliente, auth()->user(), request());
+        $this->auditService->logView($cliente, Auth::user(), request());
 
         return response()->json([
             'success' => true,
@@ -100,7 +101,7 @@ class ClienteController extends Controller
             $cliente->refresh();
 
             // Log de auditoria
-            $this->auditService->logUpdate($cliente, $oldValues, auth()->user(), $request);
+            $this->auditService->logUpdate($cliente, $oldValues, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -127,7 +128,7 @@ class ClienteController extends Controller
 
         try {
             // Log de auditoria antes de deletar
-            $this->auditService->logDelete($cliente, auth()->user(), request());
+            $this->auditService->logDelete($cliente, Auth::user(), request());
 
             $this->clienteService->excluir($cliente);
 

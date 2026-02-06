@@ -14,6 +14,7 @@ use App\Services\AuditService;
 use App\Services\PromissoriaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PromissoriaController extends Controller
 {
@@ -72,7 +73,7 @@ class PromissoriaController extends Controller
             $promissoria = $this->promissoriaService->criar($dto);
 
             // Log de auditoria
-            $this->auditService->logCreate($promissoria, auth()->user(), $request);
+            $this->auditService->logCreate($promissoria, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -97,7 +98,7 @@ class PromissoriaController extends Controller
     {
         $this->authorize('view', $promissoria);
 
-        $this->auditService->logView($promissoria, auth()->user(), request());
+        $this->auditService->logView($promissoria, Auth::user(), request());
 
         $promissoria->load(['cliente', 'historicoPagamentos']);
         $data = $promissoria->toArray();
@@ -123,7 +124,7 @@ class PromissoriaController extends Controller
             $promissoria->refresh();
 
             // Log de auditoria
-            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), $request);
+            $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -150,7 +151,7 @@ class PromissoriaController extends Controller
 
         try {
             // Log de auditoria antes de deletar
-            $this->auditService->logDelete($promissoria, auth()->user(), request());
+            $this->auditService->logDelete($promissoria, Auth::user(), request());
 
             $this->promissoriaService->excluir($promissoria);
 
@@ -181,7 +182,7 @@ class PromissoriaController extends Controller
             $this->promissoriaService->marcarComoPaga($promissoria);
             $promissoria->refresh();
 
-            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), request());
+            $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), request());
 
             return response()->json([
                 'success' => true,
@@ -234,7 +235,7 @@ class PromissoriaController extends Controller
             $promissoria->refresh();
 
             // Log de auditoria
-            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), $request);
+            $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -279,7 +280,7 @@ class PromissoriaController extends Controller
             $promissoria->refresh();
 
             // Log de auditoria
-            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), $request);
+            $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
