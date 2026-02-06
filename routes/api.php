@@ -17,6 +17,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Rotas adicionais para promissórias
     Route::post('/promissorias/{promissoria}/marcar-como-paga', [PromissoriaController::class, 'marcarComoPaga']);
+    Route::post('/promissorias/{promissoria}/pagamento-parcial', [PromissoriaController::class, 'registrarPagamentoParcial']);
+    Route::post('/promissorias/{promissoria}/cancelar', [PromissoriaController::class, 'cancelar']);
+    Route::get('/promissorias/{promissoria}/historico-pagamentos', [PromissoriaController::class, 'historicoPagamentos']);
     Route::get('/promissorias/resumo/vencimento', [PromissoriaController::class, 'resumoVencimento']);
 
     // Rotas de permissões

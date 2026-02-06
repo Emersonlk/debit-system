@@ -7,11 +7,12 @@ enum PromissoriaStatus: string
     case PENDENTE = 'pendente';
     case PAGA = 'paga';
     case VENCIDA = 'vencida';
+    case CANCELADA = 'cancelada';
 
     /**
      * Array com todos os valores possíveis do enum
      */
-    private const VALORES = ['pendente', 'paga', 'vencida'];
+    private const VALORES = ['pendente', 'paga', 'vencida', 'cancelada'];
 
     /**
      * Retorna todos os valores possíveis do enum

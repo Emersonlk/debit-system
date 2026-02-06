@@ -11,9 +11,12 @@ Sistema desenvolvido em Laravel para gerenciar vendas com promissórias, permiti
 
 ### Gestão de Promissórias
 - Cadastro de promissórias vinculadas a clientes
-- Controle de status usando Enum (pendente, paga, vencida)
+- Controle de status usando Enum (pendente, paga, vencida, cancelada)
 - Filtros por status, cliente, vencidas e próximas do vencimento
 - Marcar promissória como paga
+- **Pagamento parcial**: Registro de pagamentos parciais com cálculo automático de saldo restante
+- **Histórico de pagamentos**: Visualização completa de todos os pagamentos realizados
+- **Cancelamento**: Cancelamento de promissórias (exceto as já pagas)
 - Resumo de vencimentos com estatísticas
 
 ### Sistema de Permissões
@@ -156,10 +159,20 @@ MAIL_PORT=1025
 - `GET /api/promissorias` - Listar promissórias
   - Query params: `status`, `cliente_id`, `vencidas`, `proximas_vencimento`, `dias`, `per_page`
 - `POST /api/promissorias` - Criar promissória
-- `GET /api/promissorias/{id}` - Exibir promissória
+- `GET /api/promissorias/{id}` - Exibir promissória (inclui informações de pagamento parcial se houver)
 - `PUT /api/promissorias/{id}` - Atualizar promissória
 - `DELETE /api/promissorias/{id}` - Remover promissória (apenas admin)
-- `POST /api/promissorias/{id}/marcar-como-paga` - Marcar promissória como paga
+- `POST /api/promissorias/{id}/marcar-como-paga` - Marcar promissória como paga (total)
+- `POST /api/promissorias/{id}/pagamento-parcial` - Registrar pagamento parcial
+  - Body: `{"valor_pago": 300.00, "data_pagamento": "2026-01-17", "observacoes": "Opcional"}`
+  - Calcula automaticamente o saldo restante
+  - Marca como paga automaticamente quando o total é atingido
+- `POST /api/promissorias/{id}/cancelar` - Cancelar promissória
+  - Body: `{"observacoes": "Opcional - motivo do cancelamento"}`
+  - Não permite cancelar promissórias já pagas
+- `GET /api/promissorias/{id}/historico-pagamentos` - Obter histórico completo de pagamentos parciais
+  - Retorna lista de pagamentos com valores, datas e observações
+  - Inclui resumo: valor total pago, saldo restante
 - `GET /api/promissorias/resumo/vencimento` - Resumo de promissórias próximas do vencimento e vencidas
 
 **Permissões:**
@@ -245,6 +258,95 @@ O sistema registra automaticamente todas as ações realizadas pelos usuários:
 - Valores antigos e novos (para updates)
 - IP address e User Agent
 - Timestamp
+
+## 💰 Pagamento Parcial e Cancelamento
+
+O sistema permite o registro de pagamentos parciais e cancelamento de promissórias.
+
+### Pagamento Parcial
+
+Registre pagamentos parciais que serão automaticamente somados. O sistema calcula o saldo restante automaticamente e marca a promissória como paga quando o valor total é atingido.
+
+**Exemplo de requisição:**
+```json
+POST /api/promissorias/1/pagamento-parcial
+{
+    "valor_pago": 300.00,
+    "data_pagamento": "2026-01-17",
+    "observacoes": "Primeiro pagamento parcial"
+}
+```
+
+**Resposta:**
+```json
+{
+    "success": true,
+    "status_code": 201,
+    "message": "Pagamento parcial registrado com sucesso",
+    "data": {
+        "promissoria": {...},
+        "historico_pagamento": {...},
+        "valor_total_pago": "300.00",
+        "saldo_restante": "700.00"
+    }
+}
+```
+
+**Validações:**
+- Não permite pagamento em promissórias já pagas
+- Não permite pagamento em promissórias canceladas
+- O valor pago não pode exceder o saldo restante
+
+### Histórico de Pagamentos
+
+Consulte o histórico completo de pagamentos parciais de uma promissória:
+
+```json
+GET /api/promissorias/1/historico-pagamentos
+
+{
+    "success": true,
+    "status_code": 200,
+    "data": {
+        "promissoria": {
+            "id": 1,
+            "valor": "1000.00",
+            "valor_total_pago": "500.00",
+            "saldo_restante": "500.00",
+            "status": "pendente"
+        },
+        "historico_pagamentos": [
+            {
+                "id": 1,
+                "valor_pago": "300.00",
+                "data_pagamento": "2026-01-15",
+                "observacoes": "Primeiro pagamento"
+            },
+            {
+                "id": 2,
+                "valor_pago": "200.00",
+                "data_pagamento": "2026-01-17",
+                "observacoes": "Segundo pagamento"
+            }
+        ]
+    }
+}
+```
+
+### Cancelamento
+
+Cancela uma promissória (não permite cancelar promissórias já pagas):
+
+```json
+POST /api/promissorias/1/cancelar
+{
+    "observacoes": "Cancelado por solicitação do cliente"
+}
+```
+
+**Validações:**
+- Não permite cancelar promissórias já pagas
+- Não permite cancelar promissórias já canceladas
 
 ## 📧 Notificações
 

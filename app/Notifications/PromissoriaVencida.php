@@ -36,11 +36,11 @@ class PromissoriaVencida extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $dataVencimento = $this->promissoria->data_vencimento->startOfDay();
+        $dataVencimento = $this->promissoria->data_vencimento->copy()->startOfDay();
         $hoje = now()->startOfDay();
         
-        // Calcula dias que passaram desde o vencimento (sempre positivo para promissórias vencidas)
-        $diasVencida = $dataVencimento->diffInDays($hoje);
+        // Calcula dias que passaram desde o vencimento (número inteiro)
+        $diasVencida = (int) $dataVencimento->diffInDays($hoje);
         
         // Formata o texto dos dias
         if ($diasVencida === 0) {
@@ -81,7 +81,7 @@ class PromissoriaVencida extends Notification implements ShouldQueue
             'cliente_nome' => $this->promissoria->cliente->nome,
             'valor' => $this->promissoria->valor,
             'data_vencimento' => $this->promissoria->data_vencimento->toDateString(),
-            'dias_vencida' => now()->diffInDays($this->promissoria->data_vencimento),
+            'dias_vencida' => (int) $this->promissoria->data_vencimento->copy()->startOfDay()->diffInDays(now()->startOfDay()),
         ];
     }
 }

@@ -15,6 +15,7 @@ class PromissoriaStatusTest extends TestCase
         $this->assertEquals('pendente', PromissoriaStatus::PENDENTE->value);
         $this->assertEquals('paga', PromissoriaStatus::PAGA->value);
         $this->assertEquals('vencida', PromissoriaStatus::VENCIDA->value);
+        $this->assertEquals('cancelada', PromissoriaStatus::CANCELADA->value);
     }
 
     /**
@@ -25,10 +26,11 @@ class PromissoriaStatusTest extends TestCase
         $valores = PromissoriaStatus::valores();
 
         $this->assertIsArray($valores);
-        $this->assertCount(3, $valores);
+        $this->assertCount(4, $valores);
         $this->assertContains('pendente', $valores);
         $this->assertContains('paga', $valores);
         $this->assertContains('vencida', $valores);
+        $this->assertContains('cancelada', $valores);
     }
 
     /**
@@ -42,6 +44,7 @@ class PromissoriaStatusTest extends TestCase
         $this->assertStringContainsString('pendente', $valoresString);
         $this->assertStringContainsString('paga', $valoresString);
         $this->assertStringContainsString('vencida', $valoresString);
+        $this->assertStringContainsString('cancelada', $valoresString);
     }
 
     /**
@@ -52,6 +55,7 @@ class PromissoriaStatusTest extends TestCase
         $this->assertTrue(PromissoriaStatus::isValid('pendente'));
         $this->assertTrue(PromissoriaStatus::isValid('paga'));
         $this->assertTrue(PromissoriaStatus::isValid('vencida'));
+        $this->assertTrue(PromissoriaStatus::isValid('cancelada'));
     }
 
     /**

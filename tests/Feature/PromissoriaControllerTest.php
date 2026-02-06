@@ -617,4 +617,310 @@ class PromissoriaControllerTest extends TestCase
             ->postJson('/api/promissorias', []);
         $response->assertJsonPath('status_code', 422);
     }
+
+    /**
+     * Testa registro de pagamento parcial
+     */
+    public function test_registrar_pagamento_parcial_successfully(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'valor' => 1000.00,
+            'status' => PromissoriaStatus::PENDENTE->value,
+        ]);
+
+        $pagamentoData = [
+            'valor_pago' => 300.00,
+            'data_pagamento' => now()->format('Y-m-d'),
+            'observacoes' => 'Primeiro pagamento',
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/pagamento-parcial", $pagamentoData);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure([
+                'success',
+                'status_code',
+                'message',
+                'data' => [
+                    'promissoria',
+                    'historico_pagamento',
+                    'valor_total_pago',
+                    'saldo_restante'
+                ]
+            ])
+            ->assertJson([
+                'success' => true,
+                'status_code' => 201,
+                'message' => 'Pagamento parcial registrado com sucesso',
+            ]);
+
+        $promissoria->refresh();
+        $this->assertEquals(300.00, (float) $promissoria->valor_total_pago);
+        $this->assertEquals(700.00, (float) $promissoria->saldo_restante);
+        $this->assertTrue($promissoria->temPagamentosParciais());
+        $this->assertEquals(PromissoriaStatus::PENDENTE, $promissoria->status); // Ainda não está totalmente paga
+    }
+
+    /**
+     * Testa registro de pagamento parcial que completa o valor total
+     */
+    public function test_registrar_pagamento_parcial_completa_promissoria(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'valor' => 500.00,
+            'status' => PromissoriaStatus::PENDENTE->value,
+        ]);
+
+        // Primeiro pagamento
+        $promissoria->historicoPagamentos()->create([
+            'valor_pago' => 200.00,
+            'data_pagamento' => now()->subDays(1)->format('Y-m-d'),
+        ]);
+
+        // Segundo pagamento que completa
+        $pagamentoData = [
+            'valor_pago' => 300.00,
+            'data_pagamento' => now()->format('Y-m-d'),
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/pagamento-parcial", $pagamentoData);
+
+        $response->assertStatus(201);
+
+        $promissoria->refresh();
+        $this->assertEquals(PromissoriaStatus::PAGA, $promissoria->status); // Agora está paga
+        $this->assertEquals(500.00, (float) $promissoria->valor_total_pago);
+        $this->assertEquals(0.00, (float) $promissoria->saldo_restante);
+    }
+
+    /**
+     * Testa que não pode registrar pagamento parcial em promissória já paga
+     */
+    public function test_registrar_pagamento_parcial_prevents_already_paid(): void
+    {
+        $promissoria = Promissoria::factory()->paga()->create();
+
+        $pagamentoData = [
+            'valor_pago' => 100.00,
+            'data_pagamento' => now()->format('Y-m-d'),
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/pagamento-parcial", $pagamentoData);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status_code' => 422,
+                'message' => 'Não é possível registrar pagamento parcial em uma promissória já paga.',
+            ]);
+    }
+
+    /**
+     * Testa que não pode registrar pagamento parcial em promissória cancelada
+     */
+    public function test_registrar_pagamento_parcial_prevents_cancelled(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'status' => PromissoriaStatus::CANCELADA->value,
+        ]);
+
+        $pagamentoData = [
+            'valor_pago' => 100.00,
+            'data_pagamento' => now()->format('Y-m-d'),
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/pagamento-parcial", $pagamentoData);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status_code' => 422,
+                'message' => 'Não é possível registrar pagamento parcial em uma promissória cancelada.',
+            ]);
+    }
+
+    /**
+     * Testa validação de valor excedendo saldo restante
+     */
+    public function test_registrar_pagamento_parcial_validates_value_exceeds_balance(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'valor' => 500.00,
+            'status' => PromissoriaStatus::PENDENTE->value,
+        ]);
+
+        // Primeiro pagamento
+        $promissoria->historicoPagamentos()->create([
+            'valor_pago' => 300.00,
+            'data_pagamento' => now()->subDays(1)->format('Y-m-d'),
+        ]);
+
+        // Tenta pagar mais do que o saldo restante (200.00)
+        $pagamentoData = [
+            'valor_pago' => 250.00,
+            'data_pagamento' => now()->format('Y-m-d'),
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/pagamento-parcial", $pagamentoData);
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment([
+            'success' => false,
+            'status_code' => 422,
+        ]);
+    }
+
+    /**
+     * Testa cancelamento de promissória
+     */
+    public function test_cancelar_promissoria_successfully(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'status' => PromissoriaStatus::PENDENTE->value,
+        ]);
+
+        $cancelData = [
+            'observacoes' => 'Cancelado por solicitação do cliente',
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/cancelar", $cancelData);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'success',
+                'status_code',
+                'message',
+                'data'
+            ])
+            ->assertJson([
+                'success' => true,
+                'status_code' => 200,
+                'message' => 'Promissória cancelada com sucesso',
+            ]);
+
+        $promissoria->refresh();
+        $this->assertEquals(PromissoriaStatus::CANCELADA, $promissoria->status);
+    }
+
+    /**
+     * Testa que não pode cancelar promissória já paga
+     */
+    public function test_cancelar_promissoria_prevents_already_paid(): void
+    {
+        $promissoria = Promissoria::factory()->paga()->create();
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/cancelar", []);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status_code' => 422,
+                'message' => 'Não é possível cancelar uma promissória já paga.',
+            ]);
+    }
+
+    /**
+     * Testa que não pode cancelar promissória já cancelada
+     */
+    public function test_cancelar_promissoria_prevents_already_cancelled(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'status' => PromissoriaStatus::CANCELADA->value,
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->postJson("/api/promissorias/{$promissoria->id}/cancelar", []);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status_code' => 422,
+                'message' => 'Esta promissória já está cancelada.',
+            ]);
+    }
+
+    /**
+     * Testa obtenção de histórico de pagamentos
+     */
+    public function test_historico_pagamentos_returns_history(): void
+    {
+        $promissoria = Promissoria::factory()->create([
+            'valor' => 1000.00,
+            'status' => PromissoriaStatus::PENDENTE->value,
+        ]);
+
+        // Cria alguns pagamentos
+        $promissoria->historicoPagamentos()->create([
+            'valor_pago' => 200.00,
+            'data_pagamento' => now()->subDays(5)->format('Y-m-d'),
+            'observacoes' => 'Primeiro pagamento',
+        ]);
+
+        $promissoria->historicoPagamentos()->create([
+            'valor_pago' => 300.00,
+            'data_pagamento' => now()->subDays(2)->format('Y-m-d'),
+            'observacoes' => 'Segundo pagamento',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/promissorias/{$promissoria->id}/historico-pagamentos");
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'success',
+                'status_code',
+                'data' => [
+                    'promissoria' => [
+                        'id',
+                        'cliente',
+                        'valor',
+                        'valor_total_pago',
+                        'saldo_restante',
+                        'status'
+                    ],
+                    'historico_pagamentos' => [
+                        '*' => [
+                            'id',
+                            'valor_pago',
+                            'data_pagamento',
+                            'observacoes',
+                            'created_at'
+                        ]
+                    ]
+                ]
+            ])
+            ->assertJson([
+                'success' => true,
+                'status_code' => 200,
+            ]);
+
+        $data = $response->json('data');
+        $this->assertEquals('500.00', $data['promissoria']['valor_total_pago']);
+        $this->assertEquals('500.00', $data['promissoria']['saldo_restante']);
+        $this->assertCount(2, $data['historico_pagamentos']);
+    }
+
+    /**
+     * Testa histórico de pagamentos vazio
+     */
+    public function test_historico_pagamentos_returns_empty_when_no_payments(): void
+    {
+        $promissoria = Promissoria::factory()->create();
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->getJson("/api/promissorias/{$promissoria->id}/historico-pagamentos");
+
+        $response->assertStatus(200);
+
+        $data = $response->json('data');
+        $this->assertEquals('0.00', $data['promissoria']['valor_total_pago']);
+        $this->assertCount(0, $data['historico_pagamentos']);
+    }
 }

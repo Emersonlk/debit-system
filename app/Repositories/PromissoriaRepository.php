@@ -17,7 +17,7 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->model->with('cliente');
+        $query = $this->model->with(['cliente', 'historicoPagamentos']);
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -44,7 +44,7 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
 
     public function find(int $id): ?Promissoria
     {
-        return $this->model->with('cliente')->find($id);
+        return $this->model->with(['cliente', 'historicoPagamentos'])->find($id);
     }
 
     public function create(array $data): Promissoria

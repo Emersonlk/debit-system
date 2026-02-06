@@ -36,11 +36,11 @@ class PromissoriaVencimentoProximo extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $dataVencimento = $this->promissoria->data_vencimento->startOfDay();
+        $dataVencimento = $this->promissoria->data_vencimento->copy()->startOfDay();
         $hoje = now()->startOfDay();
         
-        // Calcula dias restantes (sempre positivo para promissórias futuras)
-        $diasRestantes = $hoje->diffInDays($dataVencimento, false);
+        // Calcula dias restantes (número inteiro)
+        $diasRestantes = (int) $hoje->diffInDays($dataVencimento, false);
         
         // Formata o texto dos dias
         if ($diasRestantes === 0) {

@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\DTOs\CreatePromissoriaDTO;
+use App\DTOs\PagamentoParcialDTO;
 use App\DTOs\UpdatePromissoriaDTO;
-use App\Enums\PromissoriaStatus;
+use App\Http\Requests\CancelarPromissoriaRequest;
+use App\Http\Requests\PagamentoParcialRequest;
 use App\Http\Requests\StorePromissoriaRequest;
 use App\Http\Requests\UpdatePromissoriaRequest;
 use App\Models\Promissoria;
 use App\Services\AuditService;
 use App\Services\PromissoriaService;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -96,16 +97,17 @@ class PromissoriaController extends Controller
     {
         $this->authorize('view', $promissoria);
 
-        // O ModelNotFoundException será tratado automaticamente pelo exception handler
-        $promissoria = $this->promissoriaService->buscarPorId($promissoria->id);
-
-        // Log de auditoria
         $this->auditService->logView($promissoria, auth()->user(), request());
+
+        $promissoria->load(['cliente', 'historicoPagamentos']);
+        $data = $promissoria->toArray();
+        $data['valor_total_pago'] = number_format($promissoria->valor_total_pago, 2, '.', '');
+        $data['saldo_restante'] = number_format($promissoria->saldo_restante, 2, '.', '');
 
         return response()->json([
             'success' => true,
             'status_code' => 200,
-            'data' => $promissoria
+            'data' => $data
         ], 200);
     }
 
@@ -175,21 +177,10 @@ class PromissoriaController extends Controller
         $this->authorize('markAsPaid', $promissoria);
 
         try {
-            // Verifica se já está paga antes de chamar o service
-            if ($promissoria->status === PromissoriaStatus::PAGA) {
-                return response()->json([
-                    'success' => false,
-                    'status_code' => 422,
-                    'message' => 'Esta promissória já está marcada como paga.',
-                    'data' => $promissoria->load('cliente')
-                ], 422);
-            }
-
             $oldValues = $promissoria->getAttributes();
             $this->promissoriaService->marcarComoPaga($promissoria);
             $promissoria->refresh();
 
-            // Log de auditoria
             $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), request());
 
             return response()->json([
@@ -199,15 +190,18 @@ class PromissoriaController extends Controller
                 'data' => $promissoria->load('cliente')
             ], 200);
         } catch (\Exception $e) {
-            $statusCode = $e->getMessage() === 'Esta promissória já está marcada como paga.' ? 422 : 500;
-            return response()->json([
+            $msgJaPaga = 'Esta promissória já está marcada como paga.';
+            $statusCode = $e->getMessage() === $msgJaPaga ? 422 : 500;
+            $response = [
                 'success' => false,
                 'status_code' => $statusCode,
-                'message' => $e->getMessage() === 'Esta promissória já está marcada como paga.' 
-                    ? 'Esta promissória já está marcada como paga.' 
-                    : 'Erro ao marcar promissória como paga',
-                'error' => $e->getMessage() !== 'Esta promissória já está marcada como paga.' ? $e->getMessage() : null
-            ], $statusCode);
+                'message' => $statusCode === 422 ? $msgJaPaga : 'Erro ao marcar promissória como paga',
+                'error' => $statusCode === 500 ? $e->getMessage() : null
+            ];
+            if ($statusCode === 422) {
+                $response['data'] = $promissoria->load('cliente');
+            }
+            return response()->json($response, $statusCode);
         }
     }
 
@@ -225,6 +219,121 @@ class PromissoriaController extends Controller
             'success' => true,
             'status_code' => 200,
             'data' => $resumo
+        ], 200);
+    }
+
+    /**
+     * Registra um pagamento parcial na promissória
+     */
+    public function registrarPagamentoParcial(PagamentoParcialRequest $request, Promissoria $promissoria): JsonResponse
+    {
+        try {
+            $oldValues = $promissoria->getAttributes();
+            $dto = PagamentoParcialDTO::fromArray($request->validated());
+            $historicoPagamento = $this->promissoriaService->registrarPagamentoParcial($promissoria, $dto);
+            $promissoria->refresh();
+
+            // Log de auditoria
+            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), $request);
+
+            return response()->json([
+                'success' => true,
+                'status_code' => 201,
+                'message' => 'Pagamento parcial registrado com sucesso',
+                'data' => [
+                    'promissoria' => $promissoria->load(['cliente', 'historicoPagamentos']),
+                    'historico_pagamento' => $historicoPagamento,
+                    'valor_total_pago' => number_format($promissoria->valor_total_pago, 2, '.', ''),
+                    'saldo_restante' => number_format($promissoria->saldo_restante, 2, '.', ''),
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            $mensagensErro422 = [
+                'Não é possível registrar pagamento parcial em uma promissória já paga.',
+                'Não é possível registrar pagamento parcial em uma promissória cancelada.',
+            ];
+
+            // Verifica se a mensagem começa com "O valor do pagamento" (erro de valor excedendo saldo)
+            $isValorExcedendoSaldo = str_starts_with($e->getMessage(), 'O valor do pagamento');
+
+            $statusCode = in_array($e->getMessage(), $mensagensErro422) || $isValorExcedendoSaldo ? 422 : 500;
+
+            return response()->json([
+                'success' => false,
+                'status_code' => $statusCode,
+                'message' => $e->getMessage(),
+                'error' => $statusCode === 500 ? $e->getMessage() : null
+            ], $statusCode);
+        }
+    }
+
+    /**
+     * Cancela uma promissória
+     */
+    public function cancelar(CancelarPromissoriaRequest $request, Promissoria $promissoria): JsonResponse
+    {
+        try {
+            $oldValues = $promissoria->getAttributes();
+            $observacoes = $request->validated()['observacoes'] ?? null;
+            $this->promissoriaService->cancelar($promissoria, $observacoes);
+            $promissoria->refresh();
+
+            // Log de auditoria
+            $this->auditService->logUpdate($promissoria, $oldValues, auth()->user(), $request);
+
+            return response()->json([
+                'success' => true,
+                'status_code' => 200,
+                'message' => 'Promissória cancelada com sucesso',
+                'data' => $promissoria->load('cliente')
+            ], 200);
+        } catch (\Exception $e) {
+            $statusCode = in_array($e->getMessage(), [
+                'Não é possível cancelar uma promissória já paga.',
+                'Esta promissória já está cancelada.',
+            ]) ? 422 : 500;
+
+            return response()->json([
+                'success' => false,
+                'status_code' => $statusCode,
+                'message' => $e->getMessage(),
+                'error' => $statusCode === 500 ? $e->getMessage() : null
+            ], $statusCode);
+        }
+    }
+
+    /**
+     * Obtém o histórico de pagamentos de uma promissória
+     */
+    public function historicoPagamentos(Promissoria $promissoria): JsonResponse
+    {
+        $this->authorize('view', $promissoria);
+
+        $historico = $this->promissoriaService->obterHistoricoPagamentos($promissoria);
+        $promissoria->load('cliente');
+
+        return response()->json([
+            'success' => true,
+            'status_code' => 200,
+            'data' => [
+                'promissoria' => [
+                    'id' => $promissoria->id,
+                    'cliente' => $promissoria->cliente->nome,
+                    'valor' => number_format($promissoria->valor, 2, '.', ''),
+                    'valor_total_pago' => number_format($promissoria->valor_total_pago, 2, '.', ''),
+                    'saldo_restante' => number_format($promissoria->saldo_restante, 2, '.', ''),
+                    'status' => $promissoria->status->value,
+                ],
+                'historico_pagamentos' => $historico->map(function ($pagamento) {
+                    return [
+                        'id' => $pagamento->id,
+                        'valor_pago' => number_format($pagamento->valor_pago, 2, '.', ''),
+                        'data_pagamento' => $pagamento->data_pagamento->format('Y-m-d'),
+                        'observacoes' => $pagamento->observacoes,
+                        'created_at' => $pagamento->created_at->format('Y-m-d H:i:s'),
+                    ];
+                })
+            ]
         ], 200);
     }
 }
