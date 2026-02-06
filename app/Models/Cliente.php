@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cliente extends Model
@@ -17,8 +18,15 @@ class Cliente extends Model
         'cpf',
         'email',
         'telefone',
-        'endereco'
     ];
+
+    /**
+     * Relacionamento com Endereço (um para um)
+     */
+    public function endereco(): HasOne
+    {
+        return $this->hasOne(Endereco::class);
+    }
 
     /**
      * Relacionamento com Promissórias

@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\DTOs\CreateClienteDTO;
+use App\DTOs\EnderecoDTO;
 use PHPUnit\Framework\TestCase;
 
 class CreateClienteDTOTest extends TestCase
@@ -12,19 +13,29 @@ class CreateClienteDTOTest extends TestCase
      */
     public function test_creates_dto_with_all_fields(): void
     {
+        $endereco = new EnderecoDTO(
+            rua: 'Rua Teste',
+            numero: '123',
+            bairro: 'Centro',
+            cidade: 'São Paulo',
+            estado: 'SP',
+            complemento: null
+        );
         $dto = new CreateClienteDTO(
             nome: 'João Silva',
             cpf: '11144477735',
             email: 'joao@example.com',
             telefone: '11999999999',
-            endereco: 'Rua Teste, 123'
+            endereco: $endereco
         );
 
         $this->assertEquals('João Silva', $dto->nome);
         $this->assertEquals('11144477735', $dto->cpf);
         $this->assertEquals('joao@example.com', $dto->email);
         $this->assertEquals('11999999999', $dto->telefone);
-        $this->assertEquals('Rua Teste, 123', $dto->endereco);
+        $this->assertInstanceOf(EnderecoDTO::class, $dto->endereco);
+        $this->assertEquals('Rua Teste', $dto->endereco->rua);
+        $this->assertEquals('123', $dto->endereco->numero);
     }
 
     /**
@@ -54,7 +65,7 @@ class CreateClienteDTOTest extends TestCase
             cpf: '11144477735',
             email: 'joao@example.com',
             telefone: '11999999999',
-            endereco: 'Rua Teste, 123'
+            endereco: null
         );
 
         $array = $dto->toArray();
@@ -64,11 +75,11 @@ class CreateClienteDTOTest extends TestCase
         $this->assertEquals('11144477735', $array['cpf']);
         $this->assertEquals('joao@example.com', $array['email']);
         $this->assertEquals('11999999999', $array['telefone']);
-        $this->assertEquals('Rua Teste, 123', $array['endereco']);
+        $this->assertArrayNotHasKey('endereco', $array);
     }
 
     /**
-     * Testa método fromArray() com todos os campos
+     * Testa método fromArray() com todos os campos incluindo endereço
      */
     public function test_from_array_creates_dto_with_all_fields(): void
     {
@@ -77,7 +88,13 @@ class CreateClienteDTOTest extends TestCase
             'cpf' => '11144477735',
             'email' => 'joao@example.com',
             'telefone' => '11999999999',
-            'endereco' => 'Rua Teste, 123',
+            'endereco' => [
+                'rua' => 'Rua Teste',
+                'numero' => '123',
+                'bairro' => 'Centro',
+                'cidade' => 'São Paulo',
+                'estado' => 'SP',
+            ],
         ];
 
         $dto = CreateClienteDTO::fromArray($data);
@@ -86,6 +103,8 @@ class CreateClienteDTOTest extends TestCase
         $this->assertEquals('João Silva', $dto->nome);
         $this->assertEquals('11144477735', $dto->cpf);
         $this->assertEquals('joao@example.com', $dto->email);
+        $this->assertInstanceOf(EnderecoDTO::class, $dto->endereco);
+        $this->assertEquals('Rua Teste', $dto->endereco->rua);
     }
 
     /**

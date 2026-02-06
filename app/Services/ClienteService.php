@@ -27,12 +27,30 @@ class ClienteService
 
     public function criar(CreateClienteDTO $dto): Cliente
     {
-        return $this->clienteRepository->create($dto->toArray());
+        $cliente = $this->clienteRepository->create($dto->toArray());
+
+        if ($dto->endereco !== null && !$dto->endereco->isEmpty()) {
+            $cliente->endereco()->create($dto->endereco->toArray());
+        }
+
+        return $cliente->load('endereco');
     }
 
     public function atualizar(Cliente $cliente, UpdateClienteDTO $dto): bool
     {
-        return $this->clienteRepository->update($cliente, $dto->toArray());
+        $this->clienteRepository->update($cliente, $dto->toArray());
+
+        if ($dto->endereco !== null) {
+            $dadosEndereco = $dto->endereco->toArray();
+            if (!empty($dadosEndereco)) {
+                $cliente->endereco()->updateOrCreate(
+                    ['cliente_id' => $cliente->id],
+                    $dadosEndereco
+                );
+            }
+        }
+
+        return true;
     }
 
     public function excluir(Cliente $cliente): bool

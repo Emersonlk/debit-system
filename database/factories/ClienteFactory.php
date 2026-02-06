@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Cliente;
+use App\Models\Endereco;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -24,8 +25,24 @@ class ClienteFactory extends Factory
             'cpf' => $this->generateCpf(),
             'email' => fake()->unique()->safeEmail(),
             'telefone' => fake()->phoneNumber(),
-            'endereco' => fake()->address(),
         ];
+    }
+
+    /**
+     * Indica que o cliente deve ter um endereço associado
+     */
+    public function comEndereco(array $endereco = []): static
+    {
+        return $this->afterCreating(function (Cliente $cliente) use ($endereco) {
+            $cliente->endereco()->create(array_merge([
+                'rua' => fake()->streetName(),
+                'numero' => (string) fake()->numberBetween(1, 9999),
+                'bairro' => fake()->citySuffix(),
+                'cidade' => fake()->city(),
+                'estado' => fake()->randomElement(['SP', 'RJ', 'MG', 'PR', 'RS', 'SC', 'BA', 'PE']),
+                'complemento' => fake()->optional()->secondaryAddress(),
+            ], $endereco));
+        });
     }
 
     /**

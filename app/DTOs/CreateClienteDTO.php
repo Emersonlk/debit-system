@@ -9,7 +9,7 @@ class CreateClienteDTO
         public string $cpf,
         public ?string $email = null,
         public ?string $telefone = null,
-        public ?string $endereco = null
+        public ?EnderecoDTO $endereco = null
     ) {
     }
 
@@ -20,18 +20,21 @@ class CreateClienteDTO
             'cpf' => $this->cpf,
             'email' => $this->email,
             'telefone' => $this->telefone,
-            'endereco' => $this->endereco,
         ];
     }
 
     public static function fromArray(array $data): self
     {
+        $endereco = isset($data['endereco']) && is_array($data['endereco']) && !empty(array_filter($data['endereco']))
+            ? EnderecoDTO::fromArray($data['endereco'])
+            : null;
+
         return new self(
             nome: $data['nome'],
             cpf: $data['cpf'],
             email: $data['email'] ?? null,
             telefone: $data['telefone'] ?? null,
-            endereco: $data['endereco'] ?? null
+            endereco: $endereco
         );
     }
 }

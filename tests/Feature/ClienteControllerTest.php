@@ -94,7 +94,7 @@ class ClienteControllerTest extends TestCase
                 'success',
                 'status_code',
                 'data' => [
-                    '*' => ['id', 'nome', 'cpf', 'email', 'telefone', 'endereco', 'created_at', 'updated_at']
+                    '*' => ['id', 'nome', 'cpf', 'email', 'telefone', 'created_at', 'updated_at']
                 ],
                 'meta' => ['current_page', 'per_page', 'total', 'last_page']
             ])
@@ -131,7 +131,13 @@ class ClienteControllerTest extends TestCase
             'cpf' => '11144477735', // CPF válido conhecido
             'email' => 'joao@example.com',
             'telefone' => '11999999999',
-            'endereco' => 'Rua Teste, 123',
+            'endereco' => [
+                'rua' => 'Rua Teste',
+                'numero' => '123',
+                'bairro' => 'Centro',
+                'cidade' => 'São Paulo',
+                'estado' => 'SP',
+            ],
         ];
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
@@ -142,7 +148,7 @@ class ClienteControllerTest extends TestCase
                 'success',
                 'status_code',
                 'message',
-                'data' => ['id', 'nome', 'cpf', 'email', 'telefone', 'endereco']
+                'data' => ['id', 'nome', 'cpf', 'email', 'telefone']
             ])
             ->assertJson([
                 'success' => true,
@@ -234,7 +240,7 @@ class ClienteControllerTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'status_code',
-                'data' => ['id', 'nome', 'cpf', 'email', 'telefone', 'endereco']
+                'data' => ['id', 'nome', 'cpf', 'email', 'telefone']
             ])
             ->assertJson([
                 'success' => true,
@@ -317,7 +323,13 @@ class ClienteControllerTest extends TestCase
             'cpf' => '11144477735', // CPF válido conhecido
             'email' => 'maria@example.com',
             'telefone' => '11977777777',
-            'endereco' => 'Avenida Nova, 456',
+            'endereco' => [
+                'rua' => 'Avenida Nova',
+                'numero' => '456',
+                'bairro' => 'Centro',
+                'cidade' => 'São Paulo',
+                'estado' => 'SP',
+            ],
         ];
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
@@ -441,7 +453,6 @@ class ClienteControllerTest extends TestCase
             'cpf' => '11144477735', // CPF válido conhecido
             'email' => 'joao@example.com',
             'telefone' => null,
-            'endereco' => null,
         ];
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)

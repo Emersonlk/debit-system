@@ -24,7 +24,13 @@ class StoreClienteRequest extends FormRequest
             'email'     => 'required|email|unique:clientes,email',
             'cpf'       => ['required', 'unique:clientes,cpf', new CpfValido],
             'telefone'  => 'nullable|string|max:20',
-            'endereco'  => 'nullable|string|max:255'
+            'endereco' => 'nullable|array',
+            'endereco.rua' => 'nullable|string|max:255',
+            'endereco.numero' => 'nullable|string|max:20',
+            'endereco.bairro' => 'nullable|string|max:120',
+            'endereco.cidade' => 'nullable|string|max:120',
+            'endereco.estado' => 'nullable|string|size:2',
+            'endereco.complemento' => 'nullable|string|max:255',
         ];
     }
 

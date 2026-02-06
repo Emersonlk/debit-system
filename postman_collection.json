@@ -172,7 +172,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"nome\": \"João Silva\",\n    \"cpf\": \"11144477735\",\n    \"email\": \"joao@example.com\",\n    \"telefone\": \"11999999999\",\n    \"endereco\": \"Rua Teste, 123\"\n}"
+							"raw": "{\n    \"nome\": \"João Silva\",\n    \"cpf\": \"11144477735\",\n    \"email\": \"joao@example.com\",\n    \"telefone\": \"11999999999\",\n    \"endereco\": {\n        \"rua\": \"Rua Teste\",\n        \"numero\": \"123\",\n        \"bairro\": \"Centro\",\n        \"cidade\": \"São Paulo\",\n        \"estado\": \"SP\",\n        \"complemento\": \"Sala 1\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/clientes",
@@ -226,7 +226,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"nome\": \"João Silva Santos\",\n    \"telefone\": \"11988888888\",\n    \"endereco\": \"Rua Teste Atualizada, 456\"\n}"
+							"raw": "{\n    \"nome\": \"João Silva Santos\",\n    \"telefone\": \"11988888888\",\n    \"endereco\": {\n        \"rua\": \"Rua Teste Atualizada\",\n        \"numero\": \"456\",\n        \"bairro\": \"Centro\",\n        \"cidade\": \"São Paulo\",\n        \"estado\": \"SP\",\n        \"complemento\": null\n    }\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/clientes/1",

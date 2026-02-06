@@ -19,35 +19,35 @@ class DemoDataSeeder extends Seeder
             'email' => 'maria.silva@demo.test',
             'cpf' => '52998224725',
             'telefone' => '(11) 98765-4321',
-            'endereco' => 'Rua das Flores, 100 - São Paulo/SP',
+            'endereco' => ['rua' => 'Rua das Flores', 'numero' => '100', 'bairro' => 'Centro', 'cidade' => 'São Paulo', 'estado' => 'SP', 'complemento' => 'Sala 1'],
         ],
         [
             'nome' => 'João Santos',
             'email' => 'joao.santos@demo.test',
             'cpf' => '12345678909',
             'telefone' => '(21) 99876-5432',
-            'endereco' => 'Av. Brasil, 500 - Rio de Janeiro/RJ',
+            'endereco' => ['rua' => 'Av. Brasil', 'numero' => '500', 'bairro' => 'Centro', 'cidade' => 'Rio de Janeiro', 'estado' => 'RJ'],
         ],
         [
             'nome' => 'Ana Oliveira',
             'email' => 'ana.oliveira@demo.test',
             'cpf' => '98765432100',
             'telefone' => '(31) 99123-4567',
-            'endereco' => 'Rua da Bahia, 200 - Belo Horizonte/MG',
+            'endereco' => ['rua' => 'Rua da Bahia', 'numero' => '200', 'bairro' => 'Funcionários', 'cidade' => 'Belo Horizonte', 'estado' => 'MG'],
         ],
         [
             'nome' => 'Pedro Costa',
             'email' => 'pedro.costa@demo.test',
             'cpf' => '45678912345',
             'telefone' => '(41) 99234-5678',
-            'endereco' => 'Rua XV de Novembro, 300 - Curitiba/PR',
+            'endereco' => ['rua' => 'Rua XV de Novembro', 'numero' => '300', 'bairro' => 'Centro', 'cidade' => 'Curitiba', 'estado' => 'PR'],
         ],
         [
             'nome' => 'Carla Lima',
             'email' => 'carla.lima@demo.test',
             'cpf' => '32165498712',
             'telefone' => '(51) 99345-6789',
-            'endereco' => 'Av. Borges de Medeiros, 150 - Porto Alegre/RS',
+            'endereco' => ['rua' => 'Av. Borges de Medeiros', 'numero' => '150', 'bairro' => 'Centro', 'cidade' => 'Porto Alegre', 'estado' => 'RS'],
         ],
     ];
 
@@ -80,10 +80,18 @@ class DemoDataSeeder extends Seeder
         $clientes = collect();
 
         foreach ($this->clientesData as $dados) {
+            $endereco = $dados['endereco'] ?? null;
+            unset($dados['endereco']);
             $cliente = Cliente::firstOrCreate(
                 ['email' => $dados['email']],
                 $dados
             );
+            if ($endereco && is_array($endereco)) {
+                $cliente->endereco()->updateOrCreate(
+                    ['cliente_id' => $cliente->id],
+                    $endereco
+                );
+            }
             $clientes->push($cliente);
         }
 

@@ -9,7 +9,7 @@ class UpdateClienteDTO
         public ?string $cpf = null,
         public ?string $email = null,
         public ?string $telefone = null,
-        public ?string $endereco = null
+        public ?EnderecoDTO $endereco = null
     ) {
     }
 
@@ -29,21 +29,22 @@ class UpdateClienteDTO
         if ($this->telefone !== null) {
             $data['telefone'] = $this->telefone;
         }
-        if ($this->endereco !== null) {
-            $data['endereco'] = $this->endereco;
-        }
 
         return $data;
     }
 
     public static function fromArray(array $data): self
     {
+        $endereco = isset($data['endereco']) && is_array($data['endereco'])
+            ? EnderecoDTO::fromArray($data['endereco'])
+            : null;
+
         return new self(
             nome: $data['nome'] ?? null,
             cpf: $data['cpf'] ?? null,
             email: $data['email'] ?? null,
             telefone: $data['telefone'] ?? null,
-            endereco: $data['endereco'] ?? null
+            endereco: $endereco
         );
     }
 }

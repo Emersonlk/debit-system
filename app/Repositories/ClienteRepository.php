@@ -16,13 +16,14 @@ class ClienteRepository implements ClienteRepositoryInterface
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
         return $this->model->query()
+            ->with('endereco')
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
     }
 
     public function find(int $id): ?Cliente
     {
-        return $this->model->find($id);
+        return $this->model->with('endereco')->find($id);
     }
 
     public function create(array $data): Cliente

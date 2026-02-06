@@ -59,7 +59,7 @@ class ClienteController extends Controller
                 'success' => true,
                 'status_code' => 201,
                 'message' => 'Cliente criado com sucesso',
-                'data' => $cliente
+                'data' => $cliente->load('endereco')
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -84,7 +84,7 @@ class ClienteController extends Controller
         return response()->json([
             'success' => true,
             'status_code' => 200,
-            'data' => $cliente
+            'data' => $cliente->load('endereco')
         ], 200);
     }
 
@@ -106,7 +106,7 @@ class ClienteController extends Controller
                 'success' => true,
                 'status_code' => 200,
                 'message' => 'Cliente atualizado com sucesso',
-                'data' => $cliente
+                'data' => $cliente->load('endereco')
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
