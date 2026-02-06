@@ -12,7 +12,9 @@ class VerificarPromissoriasVencimento extends Command
      *
      * @var string
      */
-    protected $signature = 'promissorias:verificar-vencimento {--dias=3 : Número de dias antes do vencimento para notificar}';
+    protected $signature = 'promissorias:verificar-vencimento 
+                            {--dias=3 : Número de dias antes do vencimento para notificar}
+                            {--forcar : Notificar todas as próximas do vencimento, mesmo já notificadas}';
 
     /**
      * The console command description.
@@ -33,13 +35,18 @@ class VerificarPromissoriasVencimento extends Command
     public function handle(): int
     {
         $diasAntes = (int) $this->option('dias');
+        $forcar = (bool) $this->option('forcar');
+        $hoje = now()->format('Y-m-d');
         $dataLimite = now()->addDays($diasAntes);
 
-        $this->info("Verificando promissórias que vencem até {$dataLimite->format('d/m/Y')}...");
+        $this->info("Período: {$hoje} até {$dataLimite->format('Y-m-d')} (próximas do vencimento em até {$diasAntes} dias).");
+        if ($forcar) {
+            $this->warn('Modo --forcar: notificando todas as próximas do vencimento (incluindo já notificadas).');
+        }
 
         // Notifica promissórias próximas do vencimento
         $this->info("Verificando promissórias próximas do vencimento...");
-        $resultadoProximas = $this->notificacaoService->notificarPromissoriasProximasVencimento($diasAntes);
+        $resultadoProximas = $this->notificacaoService->notificarPromissoriasProximasVencimento($diasAntes, $forcar);
 
         if ($resultadoProximas['sucesso']) {
             if ($resultadoProximas['notificadas'] === 0) {

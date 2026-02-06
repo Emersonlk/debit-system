@@ -18,17 +18,25 @@ class NotificacaoService
     }
 
     /**
-     * Notifica usuários sobre promissórias próximas do vencimento
+     * Notifica usuários sobre promissórias próximas do vencimento.
+     * Quando $forcar = true, notifica todas as próximas (ignora flag notificado).
      */
-    public function notificarPromissoriasProximasVencimento(int $dias = 3): array
+    public function notificarPromissoriasProximasVencimento(int $dias = 3, bool $forcar = false): array
     {
-        $promissorias = $this->promissoriaRepository->findNaoNotificadasProximasVencimento($dias);
+        $promissorias = $forcar
+            ? $this->promissoriaRepository->findProximasVencimento($dias)
+            : $this->promissoriaRepository->findNaoNotificadasProximasVencimento($dias);
 
         if ($promissorias->isEmpty()) {
+            $totalProximas = $this->promissoriaRepository->findProximasVencimento($dias)->count();
+            $mensagem = $totalProximas > 0
+                ? "Existem {$totalProximas} promissória(s) próxima(s) do vencimento (todas já notificadas anteriormente)."
+                : 'Nenhuma promissória próxima do vencimento no período.';
             return [
                 'sucesso' => true,
                 'notificadas' => 0,
-                'mensagem' => 'Nenhuma promissória encontrada para notificar.'
+                'total' => $totalProximas,
+                'mensagem' => $mensagem
             ];
         }
 

@@ -28,13 +28,17 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
         }
 
         if (isset($filters['vencidas'])) {
-            $query->where('data_vencimento', '<', now())
+            $hojeStr = now()->format('Y-m-d');
+            $query->where('data_vencimento', '<', $hojeStr)
                 ->whereIn('status', [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value]);
         }
 
         if (isset($filters['proximas_vencimento'])) {
             $dias = (int) ($filters['dias'] ?? 3);
-            $query->whereBetween('data_vencimento', [now(), now()->addDays($dias)])
+            $hojeStr = now()->format('Y-m-d');
+            $limiteStr = now()->addDays($dias)->format('Y-m-d');
+            $query->where('data_vencimento', '>=', $hojeStr)
+                ->where('data_vencimento', '<=', $limiteStr)
                 ->where('status', PromissoriaStatus::PENDENTE->value);
         }
 
@@ -64,44 +68,50 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
 
     public function findProximasVencimento(int $dias = 3): Collection
     {
+        $hojeStr = now()->format('Y-m-d');
+        $limiteStr = now()->addDays($dias)->format('Y-m-d');
         return $this->model->with('cliente')
             ->where('status', PromissoriaStatus::PENDENTE->value)
-            ->whereBetween('data_vencimento', [now(), now()->addDays($dias)])
+            ->where('data_vencimento', '>=', $hojeStr)
+            ->where('data_vencimento', '<=', $limiteStr)
             ->get();
     }
 
     public function findVencidas(): Collection
     {
+        $hojeStr = now()->format('Y-m-d');
         return $this->model->with('cliente')
-            ->where('data_vencimento', '<', now())
+            ->where('data_vencimento', '<', $hojeStr)
             ->whereIn('status', [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value])
             ->get();
     }
 
     public function findNaoNotificadasProximasVencimento(int $dias = 3): Collection
     {
+        $hojeStr = now()->format('Y-m-d');
+        $limiteStr = now()->addDays($dias)->format('Y-m-d');
         return $this->model->with('cliente')
             ->where('status', PromissoriaStatus::PENDENTE->value)
-            ->where('data_vencimento', '>=', now()->startOfDay()) // A partir de hoje (inclusivo)
-            ->where('data_vencimento', '<=', now()->addDays($dias)->endOfDay()) // Até X dias (inclusivo)
+            ->where('data_vencimento', '>=', $hojeStr)
+            ->where('data_vencimento', '<=', $limiteStr)
             ->where('notificado', false)
             ->get();
     }
 
     public function findNaoNotificadasVencidas(): Collection
     {
-        // Busca promissórias vencidas que não estejam pagas
-        // Não filtra por 'notificado' para continuar notificando até ser paga
+        $hojeStr = now()->format('Y-m-d');
         return $this->model->with('cliente')
-            ->where('data_vencimento', '<', now())
+            ->where('data_vencimento', '<', $hojeStr)
             ->whereIn('status', [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value])
             ->get();
     }
 
     public function atualizarStatusVencidas(): int
     {
+        $hojeStr = now()->format('Y-m-d');
         return $this->model->where('status', PromissoriaStatus::PENDENTE->value)
-            ->where('data_vencimento', '<', now())
+            ->where('data_vencimento', '<', $hojeStr)
             ->update(['status' => PromissoriaStatus::VENCIDA->value]);
     }
 }
