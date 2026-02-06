@@ -75,7 +75,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 // Erro de autenticação (401)
-                if ($e instanceof Illuminate\Auth\AuthenticationException) {
+                if ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     return response()->json([
                         'success' => false,
                         'status_code' => 401,
@@ -94,7 +94,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     ], 404);
                 }
                 
-                if ($e instanceof Symfony\Component\Routing\Exception\RouteNotFoundException) {
+                if ($e instanceof \Symfony\Component\Routing\Exception\RouteNotFoundException) {
                     return response()->json([
                         'success' => false,
                         'status_code' => 404,
@@ -103,7 +103,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 // Erro de validação (422)
-                if ($e instanceof Illuminate\Validation\ValidationException) {
+                if ($e instanceof \Illuminate\Validation\ValidationException) {
                     return response()->json([
                         'success' => false,
                         'status_code' => 422,
@@ -113,7 +113,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 // Erro de autorização (403)
-                if ($e instanceof Illuminate\Auth\Access\AuthorizationException) {
+                if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
                     return response()->json([
                         'success' => false,
                         'status_code' => 403,

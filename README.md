@@ -6,6 +6,7 @@ Sistema desenvolvido em Laravel para gerenciar vendas com promissórias, permiti
 
 ### Gestão de Clientes
 - CRUD completo de clientes com validação de CPF
+- **Endereço em model separado**: rua, numero, bairro, cidade, estado, complemento (opcional)
 - Validação customizada de CPF
 - Paginação na listagem
 
@@ -147,9 +148,27 @@ MAIL_PORT=1025
 - `GET /api/clientes` - Listar clientes (com paginação)
   - Query params: `per_page` (padrão: 15)
 - `POST /api/clientes` - Criar cliente
-- `GET /api/clientes/{id}` - Exibir cliente
+- `GET /api/clientes/{id}` - Exibir cliente (inclui `endereco` quando existir)
 - `PUT /api/clientes/{id}` - Atualizar cliente
 - `DELETE /api/clientes/{id}` - Remover cliente (apenas admin)
+
+**Body para criar/atualizar cliente (endereço opcional):**
+```json
+{
+  "nome": "João Silva",
+  "cpf": "11144477735",
+  "email": "joao@example.com",
+  "telefone": "11999999999",
+  "endereco": {
+    "rua": "Rua das Flores",
+    "numero": "100",
+    "bairro": "Centro",
+    "cidade": "São Paulo",
+    "estado": "SP",
+    "complemento": "Sala 1"
+  }
+}
+```
 
 **Permissões:**
 - `clientes.listar`, `clientes.visualizar`, `clientes.criar`, `clientes.editar` → Admin e Operador

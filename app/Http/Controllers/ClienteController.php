@@ -63,24 +63,19 @@ class ClienteController extends Controller
                 'data' => $cliente->load('endereco')
             ], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 500,
-                'message' => 'Erro ao criar cliente',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseError('Erro ao criar cliente', 500, $e->getMessage());
         }
     }
 
     /**
      * Exibe um cliente específico
      */
-    public function show(Cliente $cliente): JsonResponse
+    public function show(Request $request, Cliente $cliente): JsonResponse
     {
         $this->authorize('view', $cliente);
 
         // Log de auditoria
-        $this->auditService->logView($cliente, Auth::user(), request());
+        $this->auditService->logView($cliente, Auth::user(), $request);
 
         return response()->json([
             'success' => true,
@@ -110,25 +105,20 @@ class ClienteController extends Controller
                 'data' => $cliente->load('endereco')
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 500,
-                'message' => 'Erro ao atualizar cliente',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseError('Erro ao atualizar cliente', 500, $e->getMessage());
         }
     }
 
     /**
      * Remove um cliente
      */
-    public function destroy(Cliente $cliente): JsonResponse
+    public function destroy(Request $request, Cliente $cliente): JsonResponse
     {
         $this->authorize('delete', $cliente);
 
         try {
             // Log de auditoria antes de deletar
-            $this->auditService->logDelete($cliente, Auth::user(), request());
+            $this->auditService->logDelete($cliente, Auth::user(), $request);
 
             $this->clienteService->excluir($cliente);
 
@@ -138,12 +128,7 @@ class ClienteController extends Controller
                 'message' => 'Cliente removido com sucesso'
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 500,
-                'message' => 'Erro ao remover cliente',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseError('Erro ao remover cliente', 500, $e->getMessage());
         }
     }
 }

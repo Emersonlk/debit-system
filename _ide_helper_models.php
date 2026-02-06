@@ -18,22 +18,43 @@ namespace App\Models{
  * @property string|null $cpf
  * @property string|null $telefone
  * @property string|null $email
- * @property string|null $endereco
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Endereco|null $endereco
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereCpf($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereEmail($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereEndereco($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereNome($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereTelefone($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cliente whereUpdatedAt($value)
+ * @method \Illuminate\Database\Eloquent\Relations\HasOne endereco()
  */
 	class Cliente extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $cliente_id
+ * @property string|null $rua
+ * @property string|null $numero
+ * @property string|null $bairro
+ * @property string|null $cidade
+ * @property string|null $estado
+ * @property string|null $complemento
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Cliente $cliente
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Endereco newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Endereco newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Endereco query()
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsTo cliente()
+ */
+	class Endereco extends \Eloquent {}
 }
 
 namespace App\Models{

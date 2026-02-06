@@ -160,6 +160,32 @@ class ClienteControllerTest extends TestCase
             'nome' => 'João Silva',
             'email' => 'joao@example.com',
         ]);
+        $response->assertJsonPath('data.endereco.rua', 'Rua Teste');
+        $response->assertJsonPath('data.endereco.cidade', 'São Paulo');
+    }
+
+    /**
+     * Testa que atualizar cliente com endereco: null remove o endereço
+     */
+    public function test_update_with_endereco_null_removes_endereco(): void
+    {
+        $cliente = Cliente::factory()->create();
+        $cliente->endereco()->create([
+            'rua' => 'Rua Antiga',
+            'numero' => '1',
+            'bairro' => 'Centro',
+            'cidade' => 'São Paulo',
+            'estado' => 'SP',
+        ]);
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
+            ->putJson("/api/clientes/{$cliente->id}", ['endereco' => null]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true, 'message' => 'Cliente atualizado com sucesso']);
+        $cliente->refresh();
+        $this->assertNull($cliente->endereco);
+        $this->assertDatabaseMissing('enderecos', ['cliente_id' => $cliente->id]);
     }
 
     /**

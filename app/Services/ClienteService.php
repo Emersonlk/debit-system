@@ -40,7 +40,9 @@ class ClienteService
     {
         $this->clienteRepository->update($cliente, $dto->toArray());
 
-        if ($dto->endereco !== null) {
+        if ($dto->removerEndereco) {
+            $cliente->endereco?->delete();
+        } elseif ($dto->endereco !== null) {
             $dadosEndereco = $dto->endereco->toArray();
             if (!empty($dadosEndereco)) {
                 $cliente->endereco()->updateOrCreate(

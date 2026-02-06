@@ -82,23 +82,18 @@ class PromissoriaController extends Controller
                 'data' => $promissoria->load('cliente')
             ], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 500,
-                'message' => 'Erro ao criar promissória',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseError('Erro ao criar promissória', 500, $e->getMessage());
         }
     }
 
     /**
      * Exibe uma promissória específica
      */
-    public function show(Promissoria $promissoria): JsonResponse
+    public function show(Request $request, Promissoria $promissoria): JsonResponse
     {
         $this->authorize('view', $promissoria);
 
-        $this->auditService->logView($promissoria, Auth::user(), request());
+        $this->auditService->logView($promissoria, Auth::user(), $request);
 
         $promissoria->load(['cliente', 'historicoPagamentos']);
         $data = $promissoria->toArray();
@@ -133,25 +128,20 @@ class PromissoriaController extends Controller
                 'data' => $promissoria->load('cliente')
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 500,
-                'message' => 'Erro ao atualizar promissória',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseError('Erro ao atualizar promissória', 500, $e->getMessage());
         }
     }
 
     /**
      * Remove uma promissória
      */
-    public function destroy(Promissoria $promissoria): JsonResponse
+    public function destroy(Request $request, Promissoria $promissoria): JsonResponse
     {
         $this->authorize('delete', $promissoria);
 
         try {
             // Log de auditoria antes de deletar
-            $this->auditService->logDelete($promissoria, Auth::user(), request());
+            $this->auditService->logDelete($promissoria, Auth::user(), $request);
 
             $this->promissoriaService->excluir($promissoria);
 
@@ -161,19 +151,14 @@ class PromissoriaController extends Controller
                 'message' => 'Promissória removida com sucesso'
             ], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 500,
-                'message' => 'Erro ao remover promissória',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->responseError('Erro ao remover promissória', 500, $e->getMessage());
         }
     }
 
     /**
      * Marca uma promissória como paga
      */
-    public function marcarComoPaga(Promissoria $promissoria): JsonResponse
+    public function marcarComoPaga(Request $request, Promissoria $promissoria): JsonResponse
     {
         $this->authorize('markAsPaid', $promissoria);
 
@@ -182,7 +167,7 @@ class PromissoriaController extends Controller
             $this->promissoriaService->marcarComoPaga($promissoria);
             $promissoria->refresh();
 
-            $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), request());
+            $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
                 'success' => true,
@@ -202,7 +187,9 @@ class PromissoriaController extends Controller
             if ($statusCode === 422) {
                 $response['data'] = $promissoria->load('cliente');
             }
-            return response()->json($response, $statusCode);
+            return $statusCode === 500
+                ? $this->responseError('Erro ao marcar promissória como paga', 500, $e->getMessage())
+                : response()->json($response, $statusCode);
         }
     }
 
