@@ -1,0 +1,824 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Debit System API",
+        "description": "API do sistema de débitos (clientes e promissórias). Autenticação via Sanctum (Bearer token).",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "API"
+        }
+    ],
+    "paths": {
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "description": "Autentica com email e senha. Retorna token Bearer e dados do usuário.",
+                "operationId": "32aa697dc898231b88665ae5720b50ce",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "test@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login realizado com sucesso"
+                    },
+                    "401": {
+                        "description": "Credenciais inválidas"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout",
+                "description": "Invalida o token atual (requer autenticação).",
+                "operationId": "3487ca269795b0310eefb893534c78c9",
+                "responses": {
+                    "200": {
+                        "description": "Logout efetuado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/clientes": {
+            "get": {
+                "tags": [
+                    "Clientes"
+                ],
+                "summary": "Listar clientes",
+                "description": "Lista clientes com paginação.",
+                "operationId": "9ab959d5fef70ac3c1746ae249d32fbf",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Itens por página",
+                        "required": false,
+                        "example": 15
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de clientes"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Clientes"
+                ],
+                "summary": "Criar cliente",
+                "description": "Cria um novo cliente. Pode incluir objeto endereco (rua, numero, bairro, cidade, estado, complemento).",
+                "operationId": "c034241fd1f14615f872eb03a2a0e13d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nome",
+                                    "cpf",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "nome": {
+                                        "type": "string",
+                                        "example": "João Silva"
+                                    },
+                                    "cpf": {
+                                        "type": "string",
+                                        "example": "11144477735"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "joao@example.com"
+                                    },
+                                    "telefone": {
+                                        "type": "string",
+                                        "example": "11999999999"
+                                    },
+                                    "endereco": {
+                                        "properties": {
+                                            "rua": {
+                                                "type": "string"
+                                            },
+                                            "numero": {
+                                                "type": "string"
+                                            },
+                                            "bairro": {
+                                                "type": "string"
+                                            },
+                                            "cidade": {
+                                                "type": "string"
+                                            },
+                                            "estado": {
+                                                "type": "string",
+                                                "example": "SP"
+                                            },
+                                            "complemento": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cliente criado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/clientes/{cliente}": {
+            "get": {
+                "tags": [
+                    "Clientes"
+                ],
+                "summary": "Exibir cliente",
+                "description": "Retorna um cliente pelo ID.",
+                "operationId": "9c4cc695c5f4d8e41b84dd27d86feda1",
+                "parameters": [
+                    {
+                        "name": "cliente",
+                        "in": "path",
+                        "description": "ID do cliente",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cliente encontrado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Cliente não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Clientes"
+                ],
+                "summary": "Atualizar cliente",
+                "description": "Atualiza um cliente. Envie endereco: null para remover o endereço.",
+                "operationId": "cfa36ba791cac33bf15352ca920b00e9",
+                "parameters": [
+                    {
+                        "name": "cliente",
+                        "in": "path",
+                        "description": "ID do cliente",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nome": {
+                                        "type": "string"
+                                    },
+                                    "cpf": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "telefone": {
+                                        "type": "string"
+                                    },
+                                    "endereco": {
+                                        "description": "Objeto com rua, numero, bairro, cidade, estado, complemento. Use null para remover."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cliente atualizado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Cliente não encontrado"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Clientes"
+                ],
+                "summary": "Excluir cliente",
+                "description": "Remove um cliente.",
+                "operationId": "18c69b30b17ad646044f5a45bc7c553e",
+                "parameters": [
+                    {
+                        "name": "cliente",
+                        "in": "path",
+                        "description": "ID do cliente",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cliente removido"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Cliente não encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias": {
+            "get": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Listar promissórias",
+                "description": "Lista promissórias com paginação. Filtros: status, cliente_id, vencidas, proximas_vencimento, dias.",
+                "operationId": "8a123d5ebc1b41f8addbf5b0bbb0419e",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Itens por página",
+                        "required": false
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filtrar por status (pendente, paga, cancelada)",
+                        "required": false
+                    },
+                    {
+                        "name": "cliente_id",
+                        "in": "query",
+                        "description": "Filtrar por ID do cliente",
+                        "required": false
+                    },
+                    {
+                        "name": "vencidas",
+                        "in": "query",
+                        "description": "Apenas vencidas",
+                        "required": false
+                    },
+                    {
+                        "name": "proximas_vencimento",
+                        "in": "query",
+                        "description": "Próximas do vencimento",
+                        "required": false
+                    },
+                    {
+                        "name": "dias",
+                        "in": "query",
+                        "description": "Dias para \"próximas do vencimento\"",
+                        "required": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de promissórias"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Criar promissória",
+                "description": "Cria uma nova promissória (cliente_id, valor, data_vencimento obrigatórios).",
+                "operationId": "ed457f02f5dc10bcda40ea24f433d635",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cliente_id",
+                                    "valor",
+                                    "data_vencimento"
+                                ],
+                                "properties": {
+                                    "cliente_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "valor": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1000
+                                    },
+                                    "data_vencimento": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-03-01"
+                                    },
+                                    "descricao": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Promissória criada"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias/{promissoria}": {
+            "get": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Exibir promissória",
+                "description": "Retorna uma promissória pelo ID.",
+                "operationId": "10db9ead9f35f22184f4fe53afacf794",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promissória encontrada"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Atualizar promissória",
+                "description": "Atualiza uma promissória.",
+                "operationId": "9e590c0b9464c4cccfc71a1c3272426c",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "valor": {
+                                        "type": "number"
+                                    },
+                                    "data_vencimento": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "descricao": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promissória atualizada"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Excluir promissória",
+                "description": "Remove uma promissória.",
+                "operationId": "ff6af6c4b4679bf633dc3847885a6b73",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promissória removida"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias/{promissoria}/marcar-como-paga": {
+            "post": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Marcar como paga",
+                "description": "Marca a promissória como paga.",
+                "operationId": "f321c0b465ee3cdce38c5867ebe0491b",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promissória marcada como paga"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    },
+                    "422": {
+                        "description": "Já está paga"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias/{promissoria}/pagamento-parcial": {
+            "post": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Registrar pagamento parcial",
+                "description": "Registra um pagamento parcial (valor_pago, data_pagamento, observacoes opcional).",
+                "operationId": "a7f58b7e5fb2906246a5e33c1dca504a",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "valor_pago",
+                                    "data_pagamento"
+                                ],
+                                "properties": {
+                                    "valor_pago": {
+                                        "type": "number",
+                                        "example": 500
+                                    },
+                                    "data_pagamento": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-02-05"
+                                    },
+                                    "observacoes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Pagamento registrado"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    },
+                    "422": {
+                        "description": "Validação (valor excedente, já paga, cancelada)"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias/{promissoria}/cancelar": {
+            "post": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Cancelar promissória",
+                "description": "Cancela a promissória (observacoes opcional).",
+                "operationId": "08c24348a3f0307c6af330530a924562",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "observacoes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promissória cancelada"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    },
+                    "422": {
+                        "description": "Já paga ou já cancelada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias/{promissoria}/historico-pagamentos": {
+            "get": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Histórico de pagamentos",
+                "description": "Retorna o histórico de pagamentos parciais da promissória.",
+                "operationId": "5cfaaab9732a28f1ba89a5dab69c0995",
+                "parameters": [
+                    {
+                        "name": "promissoria",
+                        "in": "path",
+                        "description": "ID da promissória",
+                        "required": true,
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Histórico de pagamentos"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "404": {
+                        "description": "Promissória não encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/promissorias/resumo/vencimento": {
+            "get": {
+                "tags": [
+                    "Promissórias"
+                ],
+                "summary": "Resumo próximas do vencimento",
+                "description": "Retorna resumo de promissórias próximas do vencimento (parâmetro dias, padrão 3).",
+                "operationId": "18ba04f5bc351592ae788fe39ebb447f",
+                "parameters": [
+                    {
+                        "name": "dias",
+                        "in": "query",
+                        "description": "Quantidade de dias",
+                        "required": false,
+                        "example": 3
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resumo"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Login e logout"
+        },
+        {
+            "name": "Clientes",
+            "description": "CRUD de clientes"
+        },
+        {
+            "name": "Promissórias",
+            "description": "CRUD e ações de promissórias"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Token Bearer (Sanctum). Use: Bearer <token>"
+            }
+        }
+    }
+}

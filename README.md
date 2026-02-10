@@ -117,6 +117,20 @@ MAIL_HOST=127.0.0.1
 MAIL_PORT=1025
 ```
 
+## 📡 Documentação da API (Swagger / OpenAPI)
+
+A API possui documentação interativa em **OpenAPI (Swagger)**. Com o servidor rodando:
+
+- **Swagger UI:** `GET /api/documentation`  
+  Exemplo: `http://localhost:8000/api/documentation`
+
+Na interface você pode ver todos os endpoints, parâmetros, exemplos de body e testar as requisições. Para rotas protegidas, use **Authorize** e informe o token no formato `Bearer <seu_token>`.
+
+Para regenerar o JSON da documentação:
+```bash
+php artisan l5-swagger:generate
+```
+
 ## 📡 Endpoints da API
 
 ### Autenticação
