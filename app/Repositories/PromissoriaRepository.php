@@ -28,9 +28,8 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
         }
 
         if (isset($filters['vencidas'])) {
-            $hojeStr = now()->format('Y-m-d');
-            $query->where('data_vencimento', '<', $hojeStr)
-                ->whereIn('status', [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value]);
+            $query->whereDate('data_vencimento', '<', now()->startOfDay())
+                ->whereNotIn('status', [PromissoriaStatus::PAGA->value, PromissoriaStatus::CANCELADA->value]);
         }
 
         if (isset($filters['proximas_vencimento'])) {
@@ -79,10 +78,10 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
 
     public function findVencidas(): Collection
     {
-        $hojeStr = now()->format('Y-m-d');
+        $hoje = now()->startOfDay();
         return $this->model->with('cliente')
-            ->where('data_vencimento', '<', $hojeStr)
-            ->whereIn('status', [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value])
+            ->whereDate('data_vencimento', '<', $hoje)
+            ->whereNotIn('status', [PromissoriaStatus::PAGA->value, PromissoriaStatus::CANCELADA->value])
             ->get();
     }
 
@@ -98,20 +97,10 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
             ->get();
     }
 
-    public function findNaoNotificadasVencidas(): Collection
-    {
-        $hojeStr = now()->format('Y-m-d');
-        return $this->model->with('cliente')
-            ->where('data_vencimento', '<', $hojeStr)
-            ->whereIn('status', [PromissoriaStatus::PENDENTE->value, PromissoriaStatus::VENCIDA->value])
-            ->get();
-    }
-
     public function atualizarStatusVencidas(): int
     {
-        $hojeStr = now()->format('Y-m-d');
         return $this->model->where('status', PromissoriaStatus::PENDENTE->value)
-            ->where('data_vencimento', '<', $hojeStr)
+            ->whereDate('data_vencimento', '<', now()->startOfDay())
             ->update(['status' => PromissoriaStatus::VENCIDA->value]);
     }
 }

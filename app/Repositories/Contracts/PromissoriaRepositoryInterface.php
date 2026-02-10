@@ -16,6 +16,5 @@ interface PromissoriaRepositoryInterface
     public function findProximasVencimento(int $dias = 3): Collection;
     public function findVencidas(): Collection;
     public function findNaoNotificadasProximasVencimento(int $dias = 3): Collection;
-    public function findNaoNotificadasVencidas(): Collection;
     public function atualizarStatusVencidas(): int;
 }

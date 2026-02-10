@@ -67,21 +67,19 @@ class VerificarPromissoriasVencimento extends Command
 
         $this->newLine();
 
-        // Notifica promissórias vencidas
-        $this->info("Verificando promissórias vencidas...");
+        // Notifica TODAS as promissórias vencidas não pagas (mesmo já notificadas antes)
+        $this->info("Verificando promissórias vencidas (todas as não pagas, inclusive já notificadas)...");
         $resultadoVencidas = $this->notificacaoService->notificarPromissoriasVencidas();
 
         if ($resultadoVencidas['sucesso']) {
-            if ($resultadoVencidas['notificadas'] === 0) {
-                $this->info($resultadoVencidas['mensagem']);
-            } else {
-                $this->warn("⚠️ Encontradas {$resultadoVencidas['total']} promissória(s) VENCIDA(S)!");
-                $this->info($resultadoVencidas['mensagem']);
-                
-                if (!empty($resultadoVencidas['erros'])) {
-                    foreach ($resultadoVencidas['erros'] as $erro) {
-                        $this->error("Erro ao notificar promissória vencida #{$erro['promissoria_id']}: {$erro['erro']}");
-                    }
+            $totalVencidas = $resultadoVencidas['total'] ?? 0;
+            if ($totalVencidas > 0) {
+                $this->warn("⚠️ Encontradas {$totalVencidas} promissória(s) VENCIDA(S)!");
+            }
+            $this->info($resultadoVencidas['mensagem']);
+            if (!empty($resultadoVencidas['erros'])) {
+                foreach ($resultadoVencidas['erros'] as $erro) {
+                    $this->error("Erro ao notificar promissória vencida #{$erro['promissoria_id']}: {$erro['erro']}");
                 }
             }
         } else {

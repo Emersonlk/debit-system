@@ -83,11 +83,13 @@ class NotificacaoService
     }
 
     /**
-     * Notifica usuários sobre promissórias vencidas
+     * Notifica usuários sobre promissórias vencidas (não pagas).
+     * Sempre traz TODAS as vencidas e envia email, mesmo que já tenham sido notificadas antes,
+     * até que a promissória seja paga.
      */
     public function notificarPromissoriasVencidas(): array
     {
-        $promissorias = $this->promissoriaRepository->findNaoNotificadasVencidas();
+        $promissorias = $this->promissoriaRepository->findVencidas();
 
         if ($promissorias->isEmpty()) {
             return [
