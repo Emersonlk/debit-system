@@ -114,10 +114,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 // Erro de autorização (403)
                 if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                    $message = $e->getMessage() !== 'This action is unauthorized.'
+                        ? $e->getMessage()
+                        : 'Acesso negado. Você não tem permissão para realizar esta ação.';
                     return response()->json([
                         'success' => false,
                         'status_code' => 403,
-                        'message' => 'Acesso negado. Você não tem permissão para realizar esta ação.'
+                        'message' => $message
                     ], 403);
                 }
 

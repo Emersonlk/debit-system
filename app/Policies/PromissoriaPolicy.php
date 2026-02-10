@@ -43,10 +43,13 @@ class PromissoriaPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Promissoria $promissoria): bool
+    public function delete(User $user, Promissoria $promissoria): bool|Response
     {
         // Apenas admin pode deletar
-        return $user->hasRole('admin');
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        return Response::deny('Você não tem permissão para excluir esta promissória.');
     }
 
     /**
