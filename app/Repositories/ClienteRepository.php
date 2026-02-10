@@ -13,12 +13,17 @@ class ClienteRepository implements ClienteRepositoryInterface
     ) {
     }
 
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator
     {
-        return $this->model->query()
-            ->with('endereco')
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = $this->model->query()->with('endereco');
+
+        if ($search !== null && trim($search) !== '') {
+            $query->where('nome', 'like', '%' . trim($search) . '%')->orderBy('nome', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function find(int $id): ?Cliente

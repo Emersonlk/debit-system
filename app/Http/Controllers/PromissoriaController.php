@@ -169,11 +169,16 @@ class PromissoriaController extends Controller
 
             $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
+            $promissoria->load('cliente');
+            $data = $promissoria->toArray();
+            $data['valor_total_pago'] = number_format($promissoria->valor_total_pago, 2, '.', '');
+            $data['saldo_restante'] = number_format($promissoria->saldo_restante, 2, '.', '');
+
             return response()->json([
                 'success' => true,
                 'status_code' => 200,
                 'message' => 'Promissória marcada como paga',
-                'data' => $promissoria->load('cliente')
+                'data' => $data
             ], 200);
         } catch (\Exception $e) {
             $msgJaPaga = 'Esta promissória já está marcada como paga.';

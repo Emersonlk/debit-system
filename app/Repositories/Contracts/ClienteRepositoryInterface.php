@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface ClienteRepositoryInterface
 {
-    public function paginate(int $perPage = 15): LengthAwarePaginator;
+    /**
+     * @param  int  $perPage
+     * @param  string|null  $search  Busca por nome (ou parte do nome)
+     * @return LengthAwarePaginator
+     */
+    public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator;
     public function find(int $id): ?Cliente;
     public function create(array $data): Cliente;
     public function update(Cliente $cliente, array $data): bool;

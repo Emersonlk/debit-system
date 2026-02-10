@@ -65,7 +65,29 @@ class PromissoriaService
             throw new Exception('Esta promissória já está marcada como paga.');
         }
 
-        return $promissoria->marcarComoPaga();
+        // Com pagamentos parciais, valor já é o saldo restante; senão, é o valor total
+        $tinhaParciais = $promissoria->valor_original !== null;
+        $valorARegistrar = $tinhaParciais
+            ? (float) $promissoria->saldo_restante
+            : (float) $promissoria->valor;
+
+        $promissoria->marcarComoPaga();
+
+        // Só cria registro no histórico se há valor a registrar (evita duplicar quando parciais já quitaram)
+        if ($valorARegistrar > 0) {
+            $promissoria->historicoPagamentos()->create([
+                'valor_pago' => $valorARegistrar,
+                'data_pagamento' => now()->format('Y-m-d'),
+                'observacoes' => $tinhaParciais ? 'Pagamento integral (saldo)' : 'Pagamento integral',
+            ]);
+        }
+
+        // Com pagamentos parciais, zera o saldo para valor_total_pago = valor_original e saldo_restante = 0
+        if ($tinhaParciais) {
+            $promissoria->update(['valor' => 0]);
+        }
+
+        return true;
     }
 
     public function obterProximasVencimento(int $dias = 3): Collection

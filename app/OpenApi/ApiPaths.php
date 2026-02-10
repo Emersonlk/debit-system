@@ -52,11 +52,12 @@ class ApiPaths
     #[OAT\Get(
         path: '/clientes',
         summary: 'Listar clientes',
-        description: 'Lista clientes com paginação.',
+        description: 'Lista clientes com paginação. Use o parâmetro search para filtrar por nome.',
         tags: ['Clientes'],
         security: [['sanctum' => []]],
         parameters: [
             new OAT\QueryParameter(name: 'per_page', description: 'Itens por página', required: false, example: 15),
+            new OAT\QueryParameter(name: 'search', description: 'Busca por nome (parte do nome)', required: false),
         ],
         responses: [
             new OAT\Response(response: 200, description: 'Lista paginada de clientes'),

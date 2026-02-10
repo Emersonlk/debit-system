@@ -29,7 +29,8 @@ class ClienteController extends Controller
         $this->authorize('viewAny', Cliente::class);
 
         $perPage = (int) $request->get('per_page', 15);
-        $clientes = $this->clienteService->listar($perPage);
+        $search = $request->get('search');
+        $clientes = $this->clienteService->listar($perPage, $search);
 
         return response()->json([
             'success' => true,

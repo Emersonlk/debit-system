@@ -97,18 +97,25 @@ class Promissoria extends Model
     /**
      * Calcula o valor total pago (soma de todos os pagamentos parciais).
      * Quando valor_original está definido, usa valor_original - valor (valor já é o saldo restante).
+     * Quando status é PAGA e não há histórico, considera pagamento integral (valor total).
      */
     public function getValorTotalPagoAttribute(): float
     {
         if ($this->valor_original !== null) {
             return (float) $this->valor_original - (float) $this->valor;
         }
-        return (float) $this->historicoPagamentos()->sum('valor_pago');
+        $somaHistorico = (float) $this->historicoPagamentos()->sum('valor_pago');
+        // Promissória paga sem registro no histórico (ex.: marcada como paga antes do registro de pagamento integral)
+        if ($somaHistorico == 0 && $this->status === PromissoriaStatus::PAGA) {
+            return (float) $this->valor;
+        }
+        return $somaHistorico;
     }
 
     /**
      * Calcula o saldo restante.
      * Quando valor_original está definido, valor já é o saldo restante; senão, valor original - valor pago.
+     * Quando status é PAGA e não há histórico, saldo restante é zero.
      */
     public function getSaldoRestanteAttribute(): float
     {
@@ -116,6 +123,10 @@ class Promissoria extends Model
             return max(0, (float) $this->valor);
         }
         $valorPago = (float) $this->historicoPagamentos()->sum('valor_pago');
+        // Promissória paga sem registro no histórico: saldo restante zero
+        if ($valorPago == 0 && $this->status === PromissoriaStatus::PAGA) {
+            return 0.0;
+        }
         return max(0, (float) $this->valor - $valorPago);
     }
 
