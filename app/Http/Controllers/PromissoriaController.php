@@ -47,6 +47,12 @@ class PromissoriaController extends Controller
             $filtros['proximas_vencimento'] = true;
             $filtros['dias'] = (int) $request->get('dias', 3);
         }
+        if ($request->filled('sort_by')) {
+            $filtros['sort_by'] = $request->sort_by;
+        }
+        if ($request->filled('sort_order')) {
+            $filtros['sort_order'] = $request->sort_order;
+        }
 
         $promissorias = $this->promissoriaService->listar($filtros, $perPage);
 

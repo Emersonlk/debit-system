@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\PromissoriaStatus;
+use App\Models\Cliente;
 use App\Models\Promissoria;
 use App\Repositories\Contracts\PromissoriaRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -41,8 +42,26 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
                 ->where('status', PromissoriaStatus::PENDENTE->value);
         }
 
-        return $query->orderBy('data_vencimento', 'asc')
-            ->paginate($perPage);
+        $sortBy = $filters['sort_by'] ?? 'cliente_nome';
+        $sortOrder = isset($filters['sort_order']) && strtolower($filters['sort_order']) === 'desc' ? 'desc' : 'asc';
+        $allowedSort = ['cliente_nome', 'valor', 'data_vencimento'];
+        if (!in_array($sortBy, $allowedSort, true)) {
+            $sortBy = 'cliente_nome';
+        }
+
+        if ($sortBy === 'cliente_nome') {
+            $query->orderBy(Cliente::select('nome')->whereColumn('clientes.id', 'promissorias.cliente_id'), $sortOrder);
+        } elseif ($sortBy === 'valor') {
+            // Ordenar pelo mesmo valor exibido na listagem (total: valor_original ?? valor) e forçar numérico
+            $query->orderByRaw(
+                'CAST(COALESCE(promissorias.valor_original, promissorias.valor) AS DECIMAL(10,2)) '
+                . ($sortOrder === 'desc' ? 'DESC' : 'ASC')
+            );
+        } else {
+            $query->orderBy('promissorias.' . $sortBy, $sortOrder);
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function find(int $id): ?Promissoria

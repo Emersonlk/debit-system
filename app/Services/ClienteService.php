@@ -15,9 +15,9 @@ class ClienteService
     ) {
     }
 
-    public function listar(int $perPage = 15, ?string $search = null): LengthAwarePaginator
+    public function listar(int $perPage = 15, ?string $search = null, ?string $sortBy = null, string $sortOrder = 'asc'): LengthAwarePaginator
     {
-        return $this->clienteRepository->paginate($perPage, $search);
+        return $this->clienteRepository->paginate($perPage, $search, $sortBy, $sortOrder);
     }
 
     public function buscarPorId(int $id): ?Cliente

@@ -30,7 +30,9 @@ class ClienteController extends Controller
 
         $perPage = (int) $request->get('per_page', 15);
         $search = $request->get('search');
-        $clientes = $this->clienteService->listar($perPage, $search);
+        $sortBy = $request->get('sort_by');
+        $sortOrder = $request->get('sort_order', 'asc');
+        $clientes = $this->clienteService->listar($perPage, $search, $sortBy, $sortOrder);
 
         return response()->json([
             'success' => true,
@@ -116,6 +118,14 @@ class ClienteController extends Controller
     public function destroy(Request $request, Cliente $cliente): JsonResponse
     {
         $this->authorize('delete', $cliente);
+
+        if ($cliente->promissorias()->exists()) {
+            return response()->json([
+                'success' => false,
+                'status_code' => 422,
+                'message' => 'Não é possível excluir um cliente que possui promissórias. Cancele ou remova as promissórias antes.',
+            ], 422);
+        }
 
         try {
             // Log de auditoria antes de deletar

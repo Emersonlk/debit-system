@@ -11,9 +11,11 @@ interface ClienteRepositoryInterface
     /**
      * @param  int  $perPage
      * @param  string|null  $search  Busca por nome (ou parte do nome)
+     * @param  string|null  $sortBy  Campo para ordenação (nome, created_at)
+     * @param  string  $sortOrder  asc ou desc
      * @return LengthAwarePaginator
      */
-    public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator;
+    public function paginate(int $perPage = 15, ?string $search = null, ?string $sortBy = null, string $sortOrder = 'asc'): LengthAwarePaginator;
     public function find(int $id): ?Cliente;
     public function create(array $data): Cliente;
     public function update(Cliente $cliente, array $data): bool;

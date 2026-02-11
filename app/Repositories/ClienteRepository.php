@@ -13,15 +13,19 @@ class ClienteRepository implements ClienteRepositoryInterface
     ) {
     }
 
-    public function paginate(int $perPage = 15, ?string $search = null): LengthAwarePaginator
+    private const ALLOWED_SORT_CLIENTES = ['nome', 'created_at'];
+
+    public function paginate(int $perPage = 15, ?string $search = null, ?string $sortBy = null, string $sortOrder = 'asc'): LengthAwarePaginator
     {
         $query = $this->model->query()->with('endereco');
 
         if ($search !== null && trim($search) !== '') {
-            $query->where('nome', 'like', '%' . trim($search) . '%')->orderBy('nome', 'asc');
-        } else {
-            $query->orderBy('created_at', 'desc');
+            $query->where('nome', 'like', '%' . trim($search) . '%');
         }
+
+        $order = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
+        $column = $sortBy && in_array($sortBy, self::ALLOWED_SORT_CLIENTES, true) ? $sortBy : 'nome';
+        $query->orderBy($column, $order);
 
         return $query->paginate($perPage);
     }
