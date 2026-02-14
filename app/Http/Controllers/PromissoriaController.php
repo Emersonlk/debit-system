@@ -15,6 +15,7 @@ use App\Services\PromissoriaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class PromissoriaController extends Controller
 {
@@ -24,9 +25,6 @@ class PromissoriaController extends Controller
     ) {
     }
 
-    /**
-     * Lista todas as promissórias com paginação
-     */
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Promissoria::class);
@@ -69,16 +67,11 @@ class PromissoriaController extends Controller
         ], 200);
     }
 
-    /**
-     * Cria uma nova promissória
-     */
     public function store(StorePromissoriaRequest $request): JsonResponse
     {
         try {
             $dto = CreatePromissoriaDTO::fromArray($request->validated());
             $promissoria = $this->promissoriaService->criar($dto);
-
-            // Log de auditoria
             $this->auditService->logCreate($promissoria, Auth::user(), $request);
 
             return response()->json([
@@ -92,9 +85,6 @@ class PromissoriaController extends Controller
         }
     }
 
-    /**
-     * Exibe uma promissória específica
-     */
     public function show(Request $request, Promissoria $promissoria): JsonResponse
     {
         $this->authorize('view', $promissoria);
@@ -113,9 +103,6 @@ class PromissoriaController extends Controller
         ], 200);
     }
 
-    /**
-     * Atualiza uma promissória existente
-     */
     public function update(UpdatePromissoriaRequest $request, Promissoria $promissoria): JsonResponse
     {
         try {
@@ -123,8 +110,6 @@ class PromissoriaController extends Controller
             $dto = UpdatePromissoriaDTO::fromArray($request->validated());
             $this->promissoriaService->atualizar($promissoria, $dto);
             $promissoria->refresh();
-
-            // Log de auditoria
             $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
@@ -138,15 +123,10 @@ class PromissoriaController extends Controller
         }
     }
 
-    /**
-     * Remove uma promissória
-     */
     public function destroy(Request $request, Promissoria $promissoria): JsonResponse
     {
         $this->authorize('delete', $promissoria);
-
         try {
-            // Log de auditoria antes de deletar
             $this->auditService->logDelete($promissoria, Auth::user(), $request);
 
             $this->promissoriaService->excluir($promissoria);
@@ -161,9 +141,6 @@ class PromissoriaController extends Controller
         }
     }
 
-    /**
-     * Marca uma promissória como paga
-     */
     public function marcarComoPaga(Request $request, Promissoria $promissoria): JsonResponse
     {
         $this->authorize('markAsPaid', $promissoria);
@@ -204,15 +181,13 @@ class PromissoriaController extends Controller
         }
     }
 
-    /**
-     * Retorna um resumo de promissórias próximas do vencimento
-     */
     public function resumoVencimento(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Promissoria::class);
 
         $dias = (int) $request->get('dias', 3);
-        $resumo = $this->promissoriaService->obterResumoVencimento($dias);
+        $cacheKey = 'promissorias.resumo_vencimento.' . $dias;
+        $resumo = Cache::remember($cacheKey, 60, fn () => $this->promissoriaService->obterResumoVencimento($dias));
 
         return response()->json([
             'success' => true,
@@ -221,9 +196,6 @@ class PromissoriaController extends Controller
         ], 200);
     }
 
-    /**
-     * Registra um pagamento parcial na promissória
-     */
     public function registrarPagamentoParcial(PagamentoParcialRequest $request, Promissoria $promissoria): JsonResponse
     {
         try {
@@ -231,8 +203,6 @@ class PromissoriaController extends Controller
             $dto = PagamentoParcialDTO::fromArray($request->validated());
             $historicoPagamento = $this->promissoriaService->registrarPagamentoParcial($promissoria, $dto);
             $promissoria->refresh();
-
-            // Log de auditoria
             $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
@@ -251,8 +221,6 @@ class PromissoriaController extends Controller
                 'Não é possível registrar pagamento parcial em uma promissória já paga.',
                 'Não é possível registrar pagamento parcial em uma promissória cancelada.',
             ];
-
-            // Verifica se a mensagem começa com "O valor do pagamento" (erro de valor excedendo saldo)
             $isValorExcedendoSaldo = str_starts_with($e->getMessage(), 'O valor do pagamento');
 
             $statusCode = in_array($e->getMessage(), $mensagensErro422) || $isValorExcedendoSaldo ? 422 : 500;
@@ -266,9 +234,6 @@ class PromissoriaController extends Controller
         }
     }
 
-    /**
-     * Cancela uma promissória
-     */
     public function cancelar(CancelarPromissoriaRequest $request, Promissoria $promissoria): JsonResponse
     {
         try {
@@ -276,8 +241,6 @@ class PromissoriaController extends Controller
             $observacoes = $request->validated()['observacoes'] ?? null;
             $this->promissoriaService->cancelar($promissoria, $observacoes);
             $promissoria->refresh();
-
-            // Log de auditoria
             $this->auditService->logUpdate($promissoria, $oldValues, Auth::user(), $request);
 
             return response()->json([
@@ -301,9 +264,6 @@ class PromissoriaController extends Controller
         }
     }
 
-    /**
-     * Obtém o histórico de pagamentos de uma promissória
-     */
     public function historicoPagamentos(Promissoria $promissoria): JsonResponse
     {
         $this->authorize('view', $promissoria);

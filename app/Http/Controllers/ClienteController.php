@@ -21,9 +21,6 @@ class ClienteController extends Controller
     ) {
     }
 
-    /**
-     * Lista todos os clientes com paginação
-     */
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Cliente::class);
@@ -47,16 +44,11 @@ class ClienteController extends Controller
         ], 200);
     }
 
-    /**
-     * Cria um novo cliente
-     */
     public function store(StoreClienteRequest $request): JsonResponse
     {
         try {
             $dto = CreateClienteDTO::fromArray($request->validated());
             $cliente = $this->clienteService->criar($dto);
-
-            // Log de auditoria
             $this->auditService->logCreate($cliente, Auth::user(), $request);
 
             return response()->json([
@@ -70,14 +62,9 @@ class ClienteController extends Controller
         }
     }
 
-    /**
-     * Exibe um cliente específico
-     */
     public function show(Request $request, Cliente $cliente): JsonResponse
     {
         $this->authorize('view', $cliente);
-
-        // Log de auditoria
         $this->auditService->logView($cliente, Auth::user(), $request);
 
         return response()->json([
@@ -87,9 +74,6 @@ class ClienteController extends Controller
         ], 200);
     }
 
-    /**
-     * Atualiza um cliente existente
-     */
     public function update(UpdateClienteRequest $request, Cliente $cliente): JsonResponse
     {
         try {
@@ -97,8 +81,6 @@ class ClienteController extends Controller
             $dto = UpdateClienteDTO::fromArray($request->validated());
             $this->clienteService->atualizar($cliente, $dto);
             $cliente->refresh();
-
-            // Log de auditoria
             $this->auditService->logUpdate($cliente, $oldValues, Auth::user(), $request);
 
             return response()->json([
@@ -112,9 +94,6 @@ class ClienteController extends Controller
         }
     }
 
-    /**
-     * Remove um cliente
-     */
     public function destroy(Request $request, Cliente $cliente): JsonResponse
     {
         $this->authorize('delete', $cliente);
@@ -128,7 +107,6 @@ class ClienteController extends Controller
         }
 
         try {
-            // Log de auditoria antes de deletar
             $this->auditService->logDelete($cliente, Auth::user(), $request);
 
             $this->clienteService->excluir($cliente);

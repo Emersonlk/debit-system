@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Ambiente e IDE
+.env
+.env.*
+!.env.example
+.idea
+.vscode
+.phpactor.json
+.phpunit.result.cache
+.phpunit.cache
+
+# Dependências (instaladas no build)
+/vendor
+/node_modules
+
+# Build frontend (pode ser feito no build ou em outro estágio)
+/public/hot
+/public/storage
+
+# Logs e cache local
+*.log
+/storage/*.key
+/storage/pail
+/storage/logs/*
+/bootstrap/cache/*
+!bootstrap/cache/.gitignore
+
+# Testes e documentação de desenvolvimento
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+
+# Outros
+.DS_Store
+Thumbs.db
+README.md
+docker-compose.override.yml

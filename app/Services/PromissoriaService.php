@@ -106,8 +106,8 @@ class PromissoriaService
         $vencidas = $this->obterVencidas();
         $dataLimite = now()->addDays($dias);
 
-        $totalProximas = $proximasVencimento->sum('valor');
-        $totalVencidas = $vencidas->sum('valor');
+        $totalProximas = $proximasVencimento->sum(fn ($p) => $p->saldo_restante);
+        $totalVencidas = $vencidas->sum(fn ($p) => $p->saldo_restante);
 
         return [
             'proximas_vencimento' => [
@@ -120,8 +120,10 @@ class PromissoriaService
                     $vencimento = $promissoria->data_vencimento->copy()->startOfDay();
                     return [
                         'id' => $promissoria->id,
+                        'cliente_id' => $promissoria->cliente_id,
                         'cliente' => $promissoria->cliente->nome,
-                        'valor' => number_format($promissoria->valor, 2, '.', ''),
+                        'valor' => number_format($promissoria->saldo_restante, 2, '.', ''),
+                        'saldo_restante' => number_format($promissoria->saldo_restante, 2, '.', ''),
                         'data_vencimento' => $promissoria->data_vencimento->format('Y-m-d'),
                         'dias_restantes' => (int) $hoje->diffInDays($vencimento, false),
                     ];
@@ -135,8 +137,10 @@ class PromissoriaService
                     $vencimento = $promissoria->data_vencimento->copy()->startOfDay();
                     return [
                         'id' => $promissoria->id,
+                        'cliente_id' => $promissoria->cliente_id,
                         'cliente' => $promissoria->cliente->nome,
-                        'valor' => number_format($promissoria->valor, 2, '.', ''),
+                        'valor' => number_format($promissoria->saldo_restante, 2, '.', ''),
+                        'saldo_restante' => number_format($promissoria->saldo_restante, 2, '.', ''),
                         'data_vencimento' => $promissoria->data_vencimento->format('Y-m-d'),
                         'dias_vencida' => (int) $vencimento->diffInDays($hoje),
                     ];

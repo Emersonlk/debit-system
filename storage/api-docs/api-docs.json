@@ -87,7 +87,7 @@
                     "Clientes"
                 ],
                 "summary": "Listar clientes",
-                "description": "Lista clientes com paginação.",
+                "description": "Lista clientes com paginação. Use o parâmetro search para filtrar por nome.",
                 "operationId": "9ab959d5fef70ac3c1746ae249d32fbf",
                 "parameters": [
                     {
@@ -96,6 +96,12 @@
                         "description": "Itens por página",
                         "required": false,
                         "example": 15
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Busca por nome (parte do nome)",
+                        "required": false
                     }
                 ],
                 "responses": {

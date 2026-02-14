@@ -18,7 +18,7 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
 
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->model->with(['cliente', 'historicoPagamentos']);
+        $query = $this->model->with('cliente');
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -52,7 +52,6 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
         if ($sortBy === 'cliente_nome') {
             $query->orderBy(Cliente::select('nome')->whereColumn('clientes.id', 'promissorias.cliente_id'), $sortOrder);
         } elseif ($sortBy === 'valor') {
-            // Ordenar pelo mesmo valor exibido na listagem (total: valor_original ?? valor) e forçar numérico
             $query->orderByRaw(
                 'CAST(COALESCE(promissorias.valor_original, promissorias.valor) AS DECIMAL(10,2)) '
                 . ($sortOrder === 'desc' ? 'DESC' : 'ASC')
@@ -92,6 +91,7 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
             ->where('status', PromissoriaStatus::PENDENTE->value)
             ->where('data_vencimento', '>=', $hojeStr)
             ->where('data_vencimento', '<=', $limiteStr)
+            ->orderBy('data_vencimento', 'asc')
             ->get();
     }
 
@@ -113,6 +113,7 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
             ->where('data_vencimento', '>=', $hojeStr)
             ->where('data_vencimento', '<=', $limiteStr)
             ->where('notificado', false)
+            ->orderBy('data_vencimento', 'asc')
             ->get();
     }
 

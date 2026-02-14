@@ -117,6 +117,95 @@ MAIL_HOST=127.0.0.1
 MAIL_PORT=1025
 ```
 
+## 🐳 Executando com Docker
+
+O projeto inclui configuração Docker para desenvolvimento com **app Laravel**, **MySQL 8**, **Redis**, **worker de filas** e **MailHog**.
+
+### Pré-requisitos
+- [Docker](https://docs.docker.com/get-docker/) e [Docker Compose](https://docs.docker.com/compose/install/) instalados.
+
+### Subir os serviços
+```bash
+# Build e start
+docker compose up -d --build
+
+# A aplicação fica em http://localhost:8000
+# MailHog UI em http://localhost:8025
+# MySQL na porta 3306 (host: localhost, user: laravel, password: secret, database: debit_system)
+# Redis na porta 6379 (opcional – cache, sessão, filas)
+```
+
+### Primeira vez (configurar app dentro do container)
+```bash
+# Copiar .env (se ainda não tiver)
+docker compose exec app cp .env.example .env
+
+# Gerar chave da aplicação
+docker compose exec app php artisan key:generate
+
+# Instalar dependências PHP (se o volume não tiver vendor)
+docker compose exec app composer install
+
+# Migrations (rodam automaticamente se usar entrypoint; senão:
+docker compose exec app php artisan migrate --force
+
+# Seeders (usuários e permissões)
+docker compose exec app php artisan db:seed
+```
+
+### Variáveis de ambiente para Docker
+O `docker-compose.yml` já define para o serviço **app**:
+- `DB_HOST=mysql`, `DB_DATABASE=debit_system`, `DB_USERNAME=laravel`, `DB_PASSWORD=secret`
+- `MAIL_HOST=mailhog`, `MAIL_PORT=1025`
+- `REDIS_HOST=redis` (para quando usar Redis)
+
+Você pode criar um `.env` na raiz com `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` para sobrescrever os padrões.
+
+### Redis e filas (opcional)
+O Docker já sobe **Redis** (porta 6379) e um **worker de filas** (`queue`). Por padrão o app continua usando **database** para cache, sessão e filas (nada muda no comportamento).
+
+**Para usar Redis e filas em background:**
+
+No `.env` (ou em variáveis de ambiente), defina:
+```env
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
+
+**O que cada um influencia:**
+
+| Recurso | Com database (padrão) | Com Redis |
+|--------|------------------------|-----------|
+| **Cache** | Tabela `cache` no MySQL | Memória Redis – mais rápido, menos carga no banco |
+| **Sessão** | Tabela `sessions` no MySQL | Redis – melhor para múltiplas instâncias do app |
+| **Filas** | Tabela `jobs` no MySQL; precisa rodar `queue:work` manualmente | Redis; o container **queue** já roda `php artisan queue:work` em background |
+
+**Quando usar Redis:**  
+- Cache: se tiver muitas leituras de config/consultas cacheadas.  
+- Sessão: se for escalar (vários containers do app).  
+- Filas: envio de e-mails, notificações, relatórios em background – o worker processa sem travar a requisição.
+
+**Serviços no Docker:** `app`, `mysql`, `redis`, `queue`, `mailhog`.
+
+### Comandos úteis
+```bash
+# Logs da aplicação
+docker compose logs -f app
+
+# Entrar no container
+docker compose exec app sh
+
+# Rodar testes
+docker compose exec app php artisan test
+
+# Parar tudo
+docker compose down
+
+# Parar e remover volumes (apaga dados do MySQL)
+docker compose down -v
+```
+
 ## 📡 Documentação da API (Swagger / OpenAPI)
 
 A API possui documentação interativa em **OpenAPI (Swagger)**. Com o servidor rodando:
@@ -136,6 +225,16 @@ php artisan l5-swagger:generate
 ### Autenticação
 - `POST /api/login` - Login e obtenção de token
 - `POST /api/logout` - Logout (requer autenticação)
+
+### Dashboard (dados para gráficos em uma única chamada)
+- `GET /api/dashboard` - Retorna todos os dados necessários para o dashboard em uma única resposta.
+
+**Query params:**
+- `dias` (opcional, padrão 3) – dias para “próximas do vencimento”.
+- `periodo` – `hoje` | `7` | `30` | `personalizado` (padrão `30`). Define o intervalo para `recebimentos_periodo`.
+- `data_inicio`, `data_fim` – obrigatórios quando `periodo=personalizado` (YYYY-MM-DD).
+
+**Resposta inclui:** `clientes.total`, `promissorias` (total, por_status, valores_totais com “total a receber” em pendente/vencida), `resumo_vencimento`, `recebimentos_periodo` (valor_total, variacao_percentual, serie por dia), `distribuicao_cliente` (top 10 por valor a receber), `maiores_dividas`, `ultimos_pagamentos`. Todas as listas de promissórias trazem `id`, `cliente_id`, `cliente` (nome), valores e datas para links e exibição.
 
 **Credenciais de teste:**
 - **Admin**: Email: `test@example.com` | Senha: `password123`
@@ -481,6 +580,17 @@ POST /api/permissoes/usuarios/2/role
 }
 ```
 
+## ⚡ Performance (otimizações)
+
+- **Listagem de promissórias:** carrega só a relação `cliente`; `historicoPagamentos` só na tela de detalhe.
+- **Resumo de vencimento:** cache de 60 segundos (Redis ou database, conforme `CACHE_STORE`).
+- **Cache de config/rotas:** para resposta mais rápida, rode no container:
+  ```bash
+  docker compose exec app php artisan config:cache
+  docker compose exec app php artisan route:cache
+  ```
+  Se alterar `.env`, limpe o cache: `php artisan config:clear`.
+
 ## 🏗️ Arquitetura
 
 O projeto segue os padrões de arquitetura do Laravel com separação de responsabilidades:
@@ -523,7 +633,7 @@ app/
 - **Laravel Notifications** - Sistema de notificações
 - **Laravel Task Scheduling** - Agendamento de tarefas
 - **PHPUnit** - Framework de testes
-- **Docker Compose** - MailHog para testes de email
+- **Docker / Docker Compose** - Ambiente com app Laravel, MySQL 8 e MailHog
 
 ## 📦 Coleção Postman
 
