@@ -6,14 +6,21 @@ use App\DTOs\CreatePromissoriaDTO;
 use App\DTOs\PagamentoParcialDTO;
 use App\DTOs\UpdatePromissoriaDTO;
 use App\Http\Requests\CancelarPromissoriaRequest;
+use App\Http\Requests\ExtrairPromissoriaImageRequest;
+use App\Http\Requests\ImportarPromissoriaImageRequest;
 use App\Http\Requests\PagamentoParcialRequest;
 use App\Http\Requests\StorePromissoriaRequest;
 use App\Http\Requests\UpdatePromissoriaRequest;
+use App\Models\Cliente;
 use App\Models\Promissoria;
+use App\Repositories\Contracts\ClienteRepositoryInterface;
+use App\Helpers\JsonHelper;
 use App\Services\AuditService;
+use App\Services\PromissoriaImageExtractorService;
 use App\Services\PromissoriaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -21,7 +28,9 @@ class PromissoriaController extends Controller
 {
     public function __construct(
         private PromissoriaService $promissoriaService,
-        private AuditService $auditService
+        private AuditService $auditService,
+        private PromissoriaImageExtractorService $extractorService,
+        private ClienteRepositoryInterface $clienteRepository
     ) {
     }
 
@@ -261,6 +270,136 @@ class PromissoriaController extends Controller
                 'message' => $e->getMessage(),
                 'error' => $statusCode === 500 ? $e->getMessage() : null
             ], $statusCode);
+        }
+    }
+
+    /**
+     * Extrai dados (nome do cliente, valor, data de vencimento) de uma imagem de nota promissória.
+     * Retorna os dados extraídos para o frontend preencher o formulário ou confirmar antes de salvar.
+     */
+    public function extrairImagem(ExtrairPromissoriaImageRequest $request): Response
+    {
+        try {
+            $dados = $this->extractorService->extrair($request->file('imagem'));
+
+            $clientesCandidatos = [];
+            if (!empty($dados['nome_cliente'])) {
+                $clientesCandidatos = $this->clienteRepository->buscarPorNome($dados['nome_cliente'])
+                    ->map(fn (Cliente $c) => ['id' => $c->id, 'nome' => $c->nome])
+                    ->values()
+                    ->all();
+            }
+
+            return JsonHelper::response([
+                'success' => true,
+                'status_code' => 200,
+                'message' => 'Dados extraídos com sucesso',
+                'data' => [
+                    'dados_extraidos' => $dados,
+                    'clientes_candidatos' => $clientesCandidatos,
+                ],
+            ], 200);
+        } catch (\RuntimeException $e) {
+            return JsonHelper::response([
+                'success' => false,
+                'status_code' => 422,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            return JsonHelper::response([
+                'success' => false,
+                'status_code' => 500,
+                'message' => 'Erro ao extrair dados da imagem.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Importa uma nota promissória a partir de uma imagem: extrai os dados e salva no banco.
+     * Se cliente_id for informado, usa esse cliente. Caso contrário, tenta encontrar por nome.
+     * Se houver 1 único cliente com nome similar, associa automaticamente.
+     */
+    public function importarImagem(ImportarPromissoriaImageRequest $request): JsonResponse
+    {
+        try {
+            $dados = $this->extractorService->extrair($request->file('imagem'));
+
+            if (empty($dados['nome_cliente'])) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 422,
+                    'message' => 'Não foi possível extrair o nome do cliente da imagem. Tente novamente ou cadastre manualmente.',
+                    'data' => ['dados_extraidos' => $dados],
+                ], 422);
+            }
+
+            $valor = $dados['valor'];
+            $dataVencimento = $dados['data_vencimento'];
+
+            if ($valor === null || $valor <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 422,
+                    'message' => 'Não foi possível extrair o valor da promissória da imagem. Verifique e tente novamente.',
+                    'data' => ['dados_extraidos' => $dados],
+                ], 422);
+            }
+
+            if (empty($dataVencimento)) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 422,
+                    'message' => 'Não foi possível extrair a data de vencimento da imagem. Verifique e tente novamente.',
+                    'data' => ['dados_extraidos' => $dados],
+                ], 422);
+            }
+
+            $clienteId = $request->input('cliente_id');
+
+            if (!$clienteId) {
+                $candidatos = $this->clienteRepository->buscarPorNome($dados['nome_cliente']);
+                if ($candidatos->count() === 1) {
+                    $clienteId = $candidatos->first()->id;
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'status_code' => 422,
+                        'message' => $candidatos->isEmpty()
+                            ? 'Nenhum cliente encontrado com o nome extraído. Cadastre o cliente antes de importar.'
+                            : 'Existem vários clientes com nome similar. Selecione o cliente correto e envie novamente.',
+                        'data' => [
+                            'dados_extraidos' => $dados,
+                            'clientes_candidatos' => $candidatos->map(fn (Cliente $c) => ['id' => $c->id, 'nome' => $c->nome])->values()->all(),
+                        ],
+                    ], 422, [], JSON_INVALID_UTF8_IGNORE);
+                }
+            }
+
+            $dto = CreatePromissoriaDTO::fromArray([
+                'cliente_id' => $clienteId,
+                'valor' => $valor,
+                'data_vencimento' => $dataVencimento,
+                'observacoes' => 'Importado automaticamente a partir de imagem de nota promissória.',
+            ]);
+
+            $promissoria = $this->promissoriaService->criar($dto);
+            $this->auditService->logCreate($promissoria, Auth::user(), $request);
+
+            return response()->json([
+                'success' => true,
+                'status_code' => 201,
+                'message' => 'Promissória importada com sucesso',
+                'data' => $promissoria->load('cliente'),
+            ], 201, [], JSON_INVALID_UTF8_IGNORE);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'status_code' => 422,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Exception $e) {
+            return $this->responseError('Erro ao importar promissória a partir da imagem', 500, $e->getMessage());
         }
     }
 

@@ -22,4 +22,11 @@ interface ClienteRepositoryInterface
     public function delete(Cliente $cliente): bool;
     public function findByEmail(string $email): ?Cliente;
     public function findByCpf(string $cpf): ?Cliente;
+
+    /**
+     * Busca clientes por nome (busca parcial, case insensitive).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Cliente>
+     */
+    public function buscarPorNome(string $nome): \Illuminate\Database\Eloquent\Collection;
 }

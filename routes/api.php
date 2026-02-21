@@ -15,6 +15,11 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::apiResource('clientes', ClienteController::class);
+
+    // Extração e importação por imagem — ANTES do resource para não conflitar com /promissorias/{id}
+    Route::post('promissorias/extrair-imagem', [PromissoriaController::class, 'extrairImagem']);
+    Route::post('promissorias/importar-imagem', [PromissoriaController::class, 'importarImagem']);
+
     Route::apiResource('promissorias', PromissoriaController::class);
     
     // Rotas adicionais para promissórias

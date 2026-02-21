@@ -59,4 +59,11 @@ class ClienteRepository implements ClienteRepositoryInterface
     {
         return $this->model->where('cpf', $cpf)->first();
     }
+
+    public function buscarPorNome(string $nome): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->model->where('nome', 'like', '%' . trim($nome) . '%')
+            ->orderBy('nome')
+            ->get();
+    }
 }
