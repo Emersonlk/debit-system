@@ -21,6 +21,13 @@ use App\Services\Contracts\PromissoriaImageExtractorInterface;
 use App\Services\Contracts\PromissoriaServiceInterface;
 use App\Services\ClienteService;
 use App\Services\DashboardService;
+use App\Services\Dashboard\Metrics\ClientesTotalMetric;
+use App\Services\Dashboard\Metrics\DistribuicaoClienteMetric;
+use App\Services\Dashboard\Metrics\MaioresDividasMetric;
+use App\Services\Dashboard\Metrics\PromissoriasResumoMetric;
+use App\Services\Dashboard\Metrics\RecebimentosPeriodoMetric;
+use App\Services\Dashboard\Metrics\ResumoVencimentoMetric;
+use App\Services\Dashboard\Metrics\UltimosPagamentosMetric;
 use App\Services\NotificacaoService;
 use App\Services\PromissoriaImageExtractorService;
 use App\Services\PromissoriaService;
@@ -55,6 +62,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PromissoriaImageExtractorInterface::class, PromissoriaImageExtractorService::class);
         $this->app->bind(NotificacaoServiceInterface::class, NotificacaoService::class);
         $this->app->bind(DashboardServiceInterface::class, DashboardService::class);
+
+        // Dashboard: métricas registradas por tag (OCP – novas métricas = novo binding na tag)
+        $this->app->tag([
+            ClientesTotalMetric::class,
+            PromissoriasResumoMetric::class,
+            ResumoVencimentoMetric::class,
+            RecebimentosPeriodoMetric::class,
+            DistribuicaoClienteMetric::class,
+            MaioresDividasMetric::class,
+            UltimosPagamentosMetric::class,
+        ], 'dashboard_metrics');
+        $this->app->when(DashboardService::class)->needs('$metrics')->giveTagged('dashboard_metrics');
     }
 
     /**
