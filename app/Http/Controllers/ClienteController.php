@@ -7,8 +7,8 @@ use App\DTOs\UpdateClienteDTO;
 use App\Http\Requests\StoreClienteRequest;
 use App\Http\Requests\UpdateClienteRequest;
 use App\Models\Cliente;
-use App\Services\AuditService;
-use App\Services\ClienteService;
+use App\Services\Contracts\AuditServiceInterface;
+use App\Services\Contracts\ClienteServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Auth;
 class ClienteController extends Controller
 {
     public function __construct(
-        private ClienteService $clienteService,
-        private AuditService $auditService
+        private ClienteServiceInterface $clienteService,
+        private AuditServiceInterface $auditService
     ) {
     }
 

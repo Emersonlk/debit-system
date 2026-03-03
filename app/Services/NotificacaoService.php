@@ -7,10 +7,10 @@ use App\Models\User;
 use App\Notifications\PromissoriaVencida;
 use App\Notifications\PromissoriaVencimentoProximo;
 use App\Repositories\Contracts\PromissoriaRepositoryInterface;
-use Exception;
+use App\Services\Contracts\NotificacaoServiceInterface;
 use Illuminate\Support\Facades\Log;
 
-class NotificacaoService
+class NotificacaoService implements NotificacaoServiceInterface
 {
     public function __construct(
         private PromissoriaRepositoryInterface $promissoriaRepository

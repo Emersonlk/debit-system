@@ -12,6 +12,18 @@ use App\Repositories\ClienteRepository;
 use App\Repositories\Contracts\ClienteRepositoryInterface;
 use App\Repositories\Contracts\PromissoriaRepositoryInterface;
 use App\Repositories\PromissoriaRepository;
+use App\Services\AuditService;
+use App\Services\Contracts\AuditServiceInterface;
+use App\Services\Contracts\ClienteServiceInterface;
+use App\Services\Contracts\DashboardServiceInterface;
+use App\Services\Contracts\NotificacaoServiceInterface;
+use App\Services\Contracts\PromissoriaImageExtractorInterface;
+use App\Services\Contracts\PromissoriaServiceInterface;
+use App\Services\ClienteService;
+use App\Services\DashboardService;
+use App\Services\NotificacaoService;
+use App\Services\PromissoriaImageExtractorService;
+use App\Services\PromissoriaService;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +47,14 @@ class AppServiceProvider extends ServiceProvider
         // Bind Repositories
         $this->app->bind(ClienteRepositoryInterface::class, ClienteRepository::class);
         $this->app->bind(PromissoriaRepositoryInterface::class, PromissoriaRepository::class);
+
+        // Bind Services
+        $this->app->bind(AuditServiceInterface::class, AuditService::class);
+        $this->app->bind(ClienteServiceInterface::class, ClienteService::class);
+        $this->app->bind(PromissoriaServiceInterface::class, PromissoriaService::class);
+        $this->app->bind(PromissoriaImageExtractorInterface::class, PromissoriaImageExtractorService::class);
+        $this->app->bind(NotificacaoServiceInterface::class, NotificacaoService::class);
+        $this->app->bind(DashboardServiceInterface::class, DashboardService::class);
     }
 
     /**

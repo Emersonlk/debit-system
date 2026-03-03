@@ -9,11 +9,12 @@ use App\Enums\PromissoriaStatus;
 use App\Models\HistoricoPagamento;
 use App\Models\Promissoria;
 use App\Repositories\Contracts\PromissoriaRepositoryInterface;
+use App\Services\Contracts\PromissoriaServiceInterface;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
-class PromissoriaService
+class PromissoriaService implements PromissoriaServiceInterface
 {
     public function __construct(
         private PromissoriaRepositoryInterface $promissoriaRepository

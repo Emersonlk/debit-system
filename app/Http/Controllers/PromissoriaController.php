@@ -15,9 +15,9 @@ use App\Models\Cliente;
 use App\Models\Promissoria;
 use App\Repositories\Contracts\ClienteRepositoryInterface;
 use App\Helpers\JsonHelper;
-use App\Services\AuditService;
-use App\Services\PromissoriaImageExtractorService;
-use App\Services\PromissoriaService;
+use App\Services\Contracts\AuditServiceInterface;
+use App\Services\Contracts\PromissoriaImageExtractorInterface;
+use App\Services\Contracts\PromissoriaServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -27,9 +27,9 @@ use Illuminate\Support\Facades\Cache;
 class PromissoriaController extends Controller
 {
     public function __construct(
-        private PromissoriaService $promissoriaService,
-        private AuditService $auditService,
-        private PromissoriaImageExtractorService $extractorService,
+        private PromissoriaServiceInterface $promissoriaService,
+        private AuditServiceInterface $auditService,
+        private PromissoriaImageExtractorInterface $extractorService,
         private ClienteRepositoryInterface $clienteRepository
     ) {
     }

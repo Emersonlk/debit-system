@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Services\Contracts\PromissoriaImageExtractorInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-class PromissoriaImageExtractorService
+class PromissoriaImageExtractorService implements PromissoriaImageExtractorInterface
 {
     private const PROVIDER_GROQ = 'groq';
     private const PROVIDER_OPENAI = 'openai';

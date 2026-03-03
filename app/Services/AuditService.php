@@ -4,11 +4,12 @@ namespace App\Services;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\Contracts\AuditServiceInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AuditService
+class AuditService implements AuditServiceInterface
 {
     /**
      * Registra uma ação no log de auditoria

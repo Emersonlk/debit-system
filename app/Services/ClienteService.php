@@ -6,9 +6,10 @@ use App\DTOs\CreateClienteDTO;
 use App\DTOs\UpdateClienteDTO;
 use App\Models\Cliente;
 use App\Repositories\Contracts\ClienteRepositoryInterface;
+use App\Services\Contracts\ClienteServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class ClienteService
+class ClienteService implements ClienteServiceInterface
 {
     public function __construct(
         private ClienteRepositoryInterface $clienteRepository

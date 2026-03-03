@@ -6,17 +6,19 @@ use App\Enums\PromissoriaStatus;
 use App\Models\Cliente;
 use App\Models\HistoricoPagamento;
 use App\Models\Promissoria;
+use App\Services\Contracts\DashboardServiceInterface;
+use App\Services\Contracts\PromissoriaServiceInterface;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-class DashboardService
+class DashboardService implements DashboardServiceInterface
 {
     private const SALDO_RESTANTE_SQL = "CASE WHEN promissorias.valor_original IS NOT NULL THEN promissorias.valor ELSE GREATEST(0, promissorias.valor - COALESCE((SELECT SUM(valor_pago) FROM historico_pagamentos WHERE promissoria_id = promissorias.id), 0)) END";
 
     public function __construct(
-        private PromissoriaService $promissoriaService
+        private PromissoriaServiceInterface $promissoriaService
     ) {
     }
 

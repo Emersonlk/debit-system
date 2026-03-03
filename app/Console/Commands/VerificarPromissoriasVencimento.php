@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\NotificacaoService;
+use App\Services\Contracts\NotificacaoServiceInterface;
 use Illuminate\Console\Command;
 
 class VerificarPromissoriasVencimento extends Command
@@ -24,7 +24,7 @@ class VerificarPromissoriasVencimento extends Command
     protected $description = 'Verifica promissórias próximas do vencimento e envia notificações por email';
 
     public function __construct(
-        private NotificacaoService $notificacaoService
+        private NotificacaoServiceInterface $notificacaoService
     ) {
         parent::__construct();
     }

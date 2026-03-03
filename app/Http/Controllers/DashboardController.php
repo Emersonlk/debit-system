@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Promissoria;
-use App\Services\DashboardService;
+use App\Services\Contracts\DashboardServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     public function __construct(
-        private DashboardService $dashboardService
+        private DashboardServiceInterface $dashboardService
     ) {
     }
 
