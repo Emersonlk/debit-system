@@ -44,6 +44,16 @@ class UserPolicy
     }
 
     /**
+     * Determine whether the user can grant/revoke roles or permissions of the model.
+     * Somente admin — não pode ser satisfeito por self-update, para impedir que um
+     * usuário atribua roles/permissões a si mesmo (auto-escalonamento de privilégio).
+     */
+    public function managePermissions(User $user, User $model): bool
+    {
+        return $user->hasRole('admin');
+    }
+
+    /**
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, User $model): bool

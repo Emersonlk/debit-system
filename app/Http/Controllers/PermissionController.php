@@ -70,7 +70,7 @@ class PermissionController extends Controller
      */
     public function atribuirRole(Request $request, User $usuario): JsonResponse
     {
-        $this->authorize('update', $usuario);
+        $this->authorize('managePermissions', $usuario);
 
         $request->validate([
             'role' => 'required|string|exists:roles,name'
@@ -95,7 +95,7 @@ class PermissionController extends Controller
      */
     public function removerRole(Request $request, User $usuario): JsonResponse
     {
-        $this->authorize('update', $usuario);
+        $this->authorize('managePermissions', $usuario);
 
         $request->validate([
             'role' => 'required|string|exists:roles,name'
@@ -120,7 +120,7 @@ class PermissionController extends Controller
      */
     public function atribuirPermissao(Request $request, User $usuario): JsonResponse
     {
-        $this->authorize('update', $usuario);
+        $this->authorize('managePermissions', $usuario);
 
         $request->validate([
             'permission' => 'required|string|exists:permissions,name'
@@ -145,7 +145,7 @@ class PermissionController extends Controller
      */
     public function removerPermissao(Request $request, User $usuario): JsonResponse
     {
-        $this->authorize('update', $usuario);
+        $this->authorize('managePermissions', $usuario);
 
         $request->validate([
             'permission' => 'required|string|exists:permissions,name'

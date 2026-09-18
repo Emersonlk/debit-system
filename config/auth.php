@@ -14,7 +14,12 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
+        // A API é 100% autenticada via Sanctum (Bearer token) — não há fluxo funcional
+        // de login por sessão/cookie ('web') neste projeto. O guard padrão reflete isso,
+        // para que resoluções de guard fora do contexto de uma requisição HTTP (seeders,
+        // comandos artisan, etc.) fiquem consistentes com o guard usado em runtime pelas
+        // rotas da API (que usam middleware auth:sanctum).
+        'guard' => env('AUTH_GUARD', 'sanctum'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
@@ -38,6 +43,14 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        // Declarado explicitamente (em vez de deixar o Sanctum injetar 'provider' => null
+        // em tempo de boot) para que o Spatie Permission consiga associar corretamente o
+        // guard 'sanctum' ao model App\Models\User ao resolver roles/permissions.
+        'sanctum' => [
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],

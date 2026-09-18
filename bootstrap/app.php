@@ -113,8 +113,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 }
 
                 // Erro de autorização (403)
-                if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
-                    $message = $e->getMessage() !== 'This action is unauthorized.'
+                // Nota: o Handler padrão do Laravel converte AuthorizationException (sem status
+                // explícito) em AccessDeniedHttpException antes desta callback rodar, então é
+                // essa segunda classe que efetivamente chega aqui na maioria dos casos.
+                if (
+                    $e instanceof \Illuminate\Auth\Access\AuthorizationException
+                    || $e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException
+                ) {
+                    $message = $e->getMessage() !== '' && $e->getMessage() !== 'This action is unauthorized.'
                         ? $e->getMessage()
                         : 'Acesso negado. Você não tem permissão para realizar esta ação.';
                     return response()->json([

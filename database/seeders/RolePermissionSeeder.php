@@ -35,13 +35,16 @@ class RolePermissionSeeder extends Seeder
             'promissorias.marcar-paga',
         ];
 
+        // guard_name explícito: a API autentica exclusivamente via Sanctum, então roles e
+        // permissions precisam existir sob o guard 'sanctum' para que Role::findByName()/
+        // Permission::findByName() (usados em PermissionController) as encontrem em runtime.
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'sanctum']);
         }
 
         // Criar roles
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $operadorRole = Role::firstOrCreate(['name' => 'operador']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
+        $operadorRole = Role::firstOrCreate(['name' => 'operador', 'guard_name' => 'sanctum']);
 
         // Atribuir todas as permissões ao admin
         $adminRole->givePermissionTo(Permission::all());

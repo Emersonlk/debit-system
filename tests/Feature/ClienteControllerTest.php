@@ -449,20 +449,22 @@ class ClienteControllerTest extends TestCase
     }
 
     /**
-     * Testa ordenação dos clientes (mais recentes primeiro)
+     * Testa ordenação explícita dos clientes por created_at desc (via sort_by/sort_order).
+     * O default de listagem (sem parâmetros) é nome asc, refletido em
+     * ClienteRepository::paginate() e usado pelo frontend (ClientesList.jsx).
      */
-    public function test_index_orders_clientes_by_created_at_desc(): void
+    public function test_index_orders_clientes_by_created_at_desc_when_requested(): void
     {
         $cliente1 = Cliente::factory()->create(['created_at' => now()->subDays(2)]);
         $cliente2 = Cliente::factory()->create(['created_at' => now()->subDays(1)]);
         $cliente3 = Cliente::factory()->create(['created_at' => now()]);
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $this->token)
-            ->getJson('/api/clientes');
+            ->getJson('/api/clientes?sort_by=created_at&sort_order=desc');
 
         $response->assertStatus(200);
         $data = $response->json('data');
-        
+
         // Verifica que o mais recente está primeiro
         $this->assertEquals($cliente3->id, $data[0]['id']);
         $this->assertEquals($cliente2->id, $data[1]['id']);
