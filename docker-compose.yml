@@ -8,30 +8,11 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
     ports:
       - "8000:8000"
     env_file:
       - .env
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - PROMISSORIA_IMAGE_PROVIDER=${PROMISSORIA_IMAGE_PROVIDER:-groq}
-      - DB_CONNECTION=mysql
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-debit_system}
-      - DB_USERNAME=${DB_USERNAME:-laravel}
-      - DB_PASSWORD=${DB_PASSWORD:-secret}
-      - CACHE_STORE=${CACHE_STORE:-database}
-      - SESSION_DRIVER=${SESSION_DRIVER:-database}
-      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - MAIL_MAILER=smtp
-      - MAIL_HOST=mailhog
-      - MAIL_PORT=1025
     depends_on:
       mysql:
         condition: service_healthy
@@ -42,17 +23,17 @@ services:
     image: mysql:8.0
     container_name: debit-system-mysql
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-debit_system}
-      MYSQL_USER: laravel
-      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$DB_PASSWORD\""]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -80,28 +61,10 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]
     env_file:
       - .env
-    environment:
-      - APP_ENV=local
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - PROMISSORIA_IMAGE_PROVIDER=${PROMISSORIA_IMAGE_PROVIDER:-groq}
-      - APP_DEBUG=true
-      - DB_CONNECTION=mysql
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-debit_system}
-      - DB_USERNAME=${DB_USERNAME:-laravel}
-      - DB_PASSWORD=${DB_PASSWORD:-secret}
-      - CACHE_STORE=${CACHE_STORE:-database}
-      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - MAIL_MAILER=smtp
-      - MAIL_HOST=mailhog
-      - MAIL_PORT=1025
     depends_on:
       mysql:
         condition: service_healthy
@@ -122,6 +85,7 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  vendor_data:
 
 networks:
   debit-system-network:
