@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Rules\CpfValido;
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -24,18 +25,27 @@ class UpdateClienteRequest extends FormRequest
         $cliente = $this->route('cliente');
         $clienteId = $cliente instanceof \App\Models\Cliente ? $cliente->id : $cliente;
 
+        // Unicidade restrita à empresa do contexto autenticado. O ->ignore() abaixo
+        // não permite escapar do tenant: o where() já limita a busca de duplicatas à
+        // empresa atual, e o cliente da rota só é resolvido dentro dela (global scope).
+        $empresaAtual = app(CurrentCompany::class)->id();
+
         return [
             'nome'      => 'sometimes|required|string|max:255',
             'email'     => [
                 'sometimes',
                 'required',
                 'email',
-                Rule::unique('clientes', 'email')->ignore($clienteId)
+                Rule::unique('clientes', 'email')
+                    ->where('company_id', $empresaAtual)
+                    ->ignore($clienteId),
             ],
             'cpf'       => [
                 'sometimes',
                 'required',
-                Rule::unique('clientes', 'cpf')->ignore($clienteId),
+                Rule::unique('clientes', 'cpf')
+                    ->where('company_id', $empresaAtual)
+                    ->ignore($clienteId),
                 new CpfValido
             ],
             'telefone'  => 'nullable|string|max:20',

@@ -3,9 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Rules\CpfValido;
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class StoreClienteRequest extends FormRequest
 {
@@ -19,10 +21,23 @@ class StoreClienteRequest extends FormRequest
 
     public function rules(): array
     {
+        // Unicidade por empresa: duas empresas diferentes podem ter o mesmo CPF/e-mail
+        // na própria carteira de clientes. A empresa vem do contexto autenticado,
+        // nunca do request.
+        $empresaAtual = app(CurrentCompany::class)->id();
+
         return [
             'nome'      => 'required|string|max:255',
-            'email'     => 'required|email|unique:clientes,email',
-            'cpf'       => ['required', 'unique:clientes,cpf', new CpfValido],
+            'email'     => [
+                'required',
+                'email',
+                Rule::unique('clientes', 'email')->where('company_id', $empresaAtual),
+            ],
+            'cpf'       => [
+                'required',
+                Rule::unique('clientes', 'cpf')->where('company_id', $empresaAtual),
+                new CpfValido,
+            ],
             'telefone'  => 'nullable|string|max:20',
             'endereco' => 'nullable|array',
             'endereco.rua' => 'nullable|string|max:255',
