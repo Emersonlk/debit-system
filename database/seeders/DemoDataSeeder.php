@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 use App\Enums\PromissoriaStatus;
 use App\Models\Cliente;
+use App\Models\Company;
 use App\Models\HistoricoPagamento;
 use App\Models\Promissoria;
+use App\Support\CurrentCompany;
 use Illuminate\Database\Seeder;
 
 class DemoDataSeeder extends Seeder
@@ -45,18 +47,30 @@ class DemoDataSeeder extends Seeder
 
         $this->call([UserSeeder::class, RolePermissionSeeder::class]);
 
-        $clientes = $this->criarClientes();
+        // Os dados de demonstração pertencem à empresa padrão. Fora de uma requisição
+        // autenticada não há contexto de empresa, então ele é definido explicitamente —
+        // é a exceção prevista pela arquitetura (ver trait BelongsToCompany).
+        $company = Company::firstOrCreate(
+            ['name' => CompanySeeder::EMPRESA_PADRAO],
+            ['status' => 'active']
+        );
 
-        $clienteIds = $clientes->pluck('id')->toArray();
-        HistoricoPagamento::whereHas('promissoria', function ($q) use ($clienteIds) {
-            $q->whereIn('cliente_id', $clienteIds);
-        })->delete();
-        Promissoria::whereIn('cliente_id', $clienteIds)->delete();
+        $totalClientes = app(CurrentCompany::class)->runAs($company, function () {
+            $clientes = $this->criarClientes();
 
-        $this->criarPromissorias($clientes);
+            $clienteIds = $clientes->pluck('id')->toArray();
+            HistoricoPagamento::whereHas('promissoria', function ($q) use ($clienteIds) {
+                $q->whereIn('cliente_id', $clienteIds);
+            })->delete();
+            Promissoria::whereIn('cliente_id', $clienteIds)->delete();
+
+            $this->criarPromissorias($clientes);
+
+            return $clientes->count();
+        });
 
         $this->command->info('DemoDataSeeder concluído.');
-        $this->command->info('Clientes: ' . $clientes->count() . ' (emails *@demo.test)');
+        $this->command->info('Clientes: ' . $totalClientes . ' (emails *@demo.test)');
         $this->command->info('Login: test@example.com / password123 (admin) | operador@example.com / password123 (operador)');
     }
 

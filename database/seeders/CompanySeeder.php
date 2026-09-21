@@ -13,18 +13,27 @@ use Illuminate\Database\Seeder;
 class CompanySeeder extends Seeder
 {
     /**
+     * Nome da empresa padrão (o negócio já existente antes do multi-tenancy).
+     */
+    public const EMPRESA_PADRAO = 'Adilson Vendas';
+
+    /**
      * Garante a empresa padrão (negócio atual) e associa a ela todo
      * registro existente que ainda não tenha company_id definido.
      */
     public function run(): void
     {
         $company = Company::firstOrCreate(
-            ['name' => 'Adilson Vendas'],
+            ['name' => self::EMPRESA_PADRAO],
             ['status' => 'active']
         );
 
         User::whereNull('company_id')->update(['company_id' => $company->id]);
-        Cliente::whereNull('company_id')->update(['company_id' => $company->id]);
+        // Sem o global scope: este backfill age justamente sobre registros que ainda
+        // não pertencem a nenhuma empresa, que por definição estão fora do contexto.
+        Cliente::withoutGlobalScope(Cliente::$companyScope)
+            ->whereNull('company_id')
+            ->update(['company_id' => $company->id]);
         Promissoria::whereNull('company_id')->update(['company_id' => $company->id]);
         HistoricoPagamento::whereNull('company_id')->update(['company_id' => $company->id]);
         AuditLog::whereNull('company_id')->update(['company_id' => $company->id]);
