@@ -206,6 +206,22 @@ docker compose down
 docker compose down -v
 ```
 
+### Banco de testes
+
+A suíte usa um banco separado (`laravel_testing`), definido em `phpunit.xml`. Isso evita que
+o `RefreshDatabase` apague os dados de desenvolvimento. Host, porta e credenciais continuam
+vindo do `.env`; só o nome do banco muda.
+
+O banco precisa existir antes da primeira execução (passo manual, feito uma única vez por
+ambiente — o `docker-compose.yml` cria apenas o banco de desenvolvimento):
+
+```bash
+docker compose exec mysql sh -c 'mysql -uroot -p"$DB_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS laravel_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
+```
+
+Não é necessário migrar esse banco: o `RefreshDatabase` executa `migrate:fresh` nele
+automaticamente na primeira execução da suíte.
+
 ## 📡 Documentação da API (Swagger / OpenAPI)
 
 A API possui documentação interativa em **OpenAPI (Swagger)**. Com o servidor rodando:

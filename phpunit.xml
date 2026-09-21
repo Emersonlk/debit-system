@@ -23,8 +23,18 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <!-- As configurações de banco serão lidas do .env -->
-        <!-- Certifique-se de ter DB_CONNECTION, DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD configurados no .env -->
+        <!-- Banco de testes separado do de desenvolvimento: a suíte usa RefreshDatabase
+             (migrate:fresh), que apagaria os dados de dev se apontasse para o mesmo banco.
+             Host, porta e credenciais continuam vindo do .env — só o database muda.
+             São necessárias as duas linhas abaixo no ambiente Docker:
+             - <env force="true">: o PhpHandler do PHPUnit só aplica <env> quando a variável
+               ainda não existe, e o container recebe DB_DATABASE pelo env_file do compose;
+             - <server>: com variables_order=EGPCS o $_SERVER também é populado pelo ambiente,
+               e o Laravel lê $_SERVER antes de $_ENV/getenv (ServerConstAdapter), então sem
+               esta linha o valor do container prevaleceria.
+             O banco laravel_testing precisa existir — veja o README. -->
+        <env name="DB_DATABASE" value="laravel_testing" force="true"/>
+        <server name="DB_DATABASE" value="laravel_testing"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
