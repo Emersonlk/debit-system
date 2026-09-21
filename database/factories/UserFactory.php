@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Company;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -29,6 +30,10 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            // Usuário normal pertence sempre a uma empresa; sem ela as rotas da API
+            // respondem 403 (middleware tenant).
+            'company_id' => Company::factory(),
+            'is_super_admin' => false,
         ];
     }
 
@@ -39,6 +44,27 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Usuário sem empresa — estado inconsistente, usado para testar o fail-closed.
+     */
+    public function semEmpresa(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'company_id' => null,
+        ]);
+    }
+
+    /**
+     * Super Admin do SaaS: sem empresa e fora do contexto de tenant.
+     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'company_id' => null,
+            'is_super_admin' => true,
         ]);
     }
 }

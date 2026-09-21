@@ -16,6 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class => false
         ]);
+
+        $middleware->alias([
+            'tenant' => \App\Http\Middleware\EnsureTenantContext::class,
+        ]);
+
+        // Ordem exigida: auth:sanctum -> tenant -> SubstituteBindings, para que o
+        // route model binding já rode com a empresa do usuário no contexto.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            prepend: \App\Http\Middleware\EnsureTenantContext::class,
+        );
     })
     ->withExceptions(function ($exceptions) {
         $exceptions->render(function (\Throwable $e, $request) {

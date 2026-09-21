@@ -31,6 +31,7 @@ use App\Services\Dashboard\Metrics\UltimosPagamentosMetric;
 use App\Services\NotificacaoService;
 use App\Services\PromissoriaImageExtractorService;
 use App\Services\PromissoriaService;
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -51,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Contexto de empresa (tenant): uma instância por requisição/job.
+        $this->app->scoped(CurrentCompany::class);
+
         // Bind Repositories
         $this->app->bind(ClienteRepositoryInterface::class, ClienteRepository::class);
         $this->app->bind(PromissoriaRepositoryInterface::class, PromissoriaRepository::class);
