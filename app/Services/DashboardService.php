@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Services\Contracts\DashboardServiceInterface;
 use App\Services\Dashboard\DashboardMetricInterface;
 use App\Services\Dashboard\DashboardPeriodResolver;
+use App\Support\CurrentCompany;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardService implements DashboardServiceInterface
 {
     public function __construct(
         private DashboardPeriodResolver $periodResolver,
+        private CurrentCompany $currentCompany,
         private iterable $metrics
     ) {
     }
@@ -18,7 +20,11 @@ class DashboardService implements DashboardServiceInterface
     public function dadosParaGraficos(int $diasResumo = 3, string $periodo = '30', ?string $dataInicio = null, ?string $dataFim = null): array
     {
         [$inicio, $fim] = $this->periodResolver->resolve($periodo, $dataInicio, $dataFim);
-        $cacheKey = 'dashboard.' . $diasResumo . '.' . $periodo . '.' . ($inicio?->format('Y-m-d') ?? '') . '.' . ($fim?->format('Y-m-d') ?? '');
+
+        // A empresa faz parte da chave: o payload é calculado sobre dados já isolados
+        // por tenant, então duas empresas com os mesmos parâmetros não podem compartilhar
+        // a entrada de cache. id() lança sem contexto — sem fallback "global".
+        $cacheKey = 'dashboard.' . $this->currentCompany->id() . '.' . $diasResumo . '.' . $periodo . '.' . ($inicio?->format('Y-m-d') ?? '') . '.' . ($fim?->format('Y-m-d') ?? '');
 
         return Cache::remember($cacheKey, 60, function () use ($diasResumo, $inicio, $fim) {
             $context = [

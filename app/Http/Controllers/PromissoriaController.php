@@ -18,6 +18,7 @@ use App\Helpers\JsonHelper;
 use App\Services\Contracts\AuditServiceInterface;
 use App\Services\Contracts\PromissoriaImageExtractorInterface;
 use App\Services\Contracts\PromissoriaServiceInterface;
+use App\Support\CurrentCompany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -30,7 +31,8 @@ class PromissoriaController extends Controller
         private PromissoriaServiceInterface $promissoriaService,
         private AuditServiceInterface $auditService,
         private PromissoriaImageExtractorInterface $extractorService,
-        private ClienteRepositoryInterface $clienteRepository
+        private ClienteRepositoryInterface $clienteRepository,
+        private CurrentCompany $currentCompany
     ) {
     }
 
@@ -195,7 +197,9 @@ class PromissoriaController extends Controller
         $this->authorize('viewAny', Promissoria::class);
 
         $dias = (int) $request->get('dias', 3);
-        $cacheKey = 'promissorias.resumo_vencimento.' . $dias;
+        // A empresa faz parte da chave: o resumo é calculado sobre promissórias já
+        // isoladas por tenant e não pode ser servido a outra empresa.
+        $cacheKey = 'promissorias.resumo_vencimento.' . $this->currentCompany->id() . '.' . $dias;
         $resumo = Cache::remember($cacheKey, 60, fn () => $this->promissoriaService->obterResumoVencimento($dias));
 
         return response()->json([
