@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Cliente;
 use App\Models\User;
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
@@ -58,6 +59,12 @@ class ClienteControllerTest extends TestCase
 
         // Atribui role admin ao usuário de teste
         $this->user->assignRole('admin');
+
+        // Estabelece a empresa do usuário como contexto do processo de teste, igual ao que
+        // o middleware tenant faz em cada requisição. Assim os registros criados por factory
+        // no corpo dos testes nascem na mesma empresa do usuário autenticado, e não fora de
+        // qualquer tenant.
+        app(CurrentCompany::class)->set((int) $this->user->company_id);
 
         // Faz login e obtém o token
         $response = $this->postJson('/api/login', [
