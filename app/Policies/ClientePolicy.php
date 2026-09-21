@@ -4,27 +4,12 @@ namespace App\Policies;
 
 use App\Models\Cliente;
 use App\Models\User;
+use App\Policies\Concerns\ChecksCompanyOwnership;
 use Illuminate\Auth\Access\Response;
 
 class ClientePolicy
 {
-    /**
-     * O cliente pertence à mesma empresa do usuário?
-     *
-     * Segunda camada de proteção, independente do global scope de Cliente: se algum
-     * código carregar o registro com withoutGlobalScope(), a autorização ainda nega.
-     *
-     * Dois valores nulos NÃO se equivalem aqui — um usuário sem empresa (ou um
-     * registro sem empresa) nunca deve ser autorizado por coincidência.
-     */
-    private function mesmaEmpresa(User $user, Cliente $cliente): bool
-    {
-        if ($user->company_id === null || $cliente->company_id === null) {
-            return false;
-        }
-
-        return (int) $user->company_id === (int) $cliente->company_id;
-    }
+    use ChecksCompanyOwnership;
 
     /**
      * Determine whether the user can view any models.

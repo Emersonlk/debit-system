@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HistoricoPagamento extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     protected $table = 'historico_pagamentos';
 
+    /**
+     * `company_id` fica deliberadamente fora: é definido pelo contexto de empresa
+     * (trait BelongsToCompany), nunca por dado vindo da requisição.
+     */
     protected $fillable = [
         'promissoria_id',
         'valor_pago',

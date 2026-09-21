@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\PromissoriaStatus;
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePromissoriaRequest extends FormRequest
 {
@@ -24,7 +26,12 @@ class UpdatePromissoriaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cliente_id' => 'sometimes|exists:clientes,id',
+            // Impede reapontar a promissória para um cliente de outra empresa
+            // (Rule::exists não passa pelo global scope de Cliente).
+            'cliente_id' => [
+                'sometimes',
+                Rule::exists('clientes', 'id')->where('company_id', app(CurrentCompany::class)->id()),
+            ],
             'valor' => 'sometimes|numeric|min:0.01',
             'data_vencimento' => 'sometimes|date',
             'status' => ['sometimes', 'in:' . PromissoriaStatus::valoresString()],

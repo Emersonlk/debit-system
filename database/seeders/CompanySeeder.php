@@ -34,8 +34,12 @@ class CompanySeeder extends Seeder
         Cliente::withoutGlobalScope(Cliente::$companyScope)
             ->whereNull('company_id')
             ->update(['company_id' => $company->id]);
-        Promissoria::whereNull('company_id')->update(['company_id' => $company->id]);
-        HistoricoPagamento::whereNull('company_id')->update(['company_id' => $company->id]);
+        Promissoria::withoutGlobalScope(Promissoria::$companyScope)
+            ->whereNull('company_id')
+            ->update(['company_id' => $company->id]);
+        HistoricoPagamento::withoutGlobalScope(HistoricoPagamento::$companyScope)
+            ->whereNull('company_id')
+            ->update(['company_id' => $company->id]);
         AuditLog::whereNull('company_id')->update(['company_id' => $company->id]);
 
         $this->command->info("Empresa padrão '{$company->name}' (id {$company->id}) associada a todos os registros sem company_id.");

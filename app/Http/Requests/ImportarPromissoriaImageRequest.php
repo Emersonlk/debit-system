@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ImportarPromissoriaImageRequest extends FormRequest
 {
@@ -15,7 +17,11 @@ class ImportarPromissoriaImageRequest extends FormRequest
     {
         return [
             'imagem' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240',
-            'cliente_id' => 'nullable|exists:clientes,id',
+            // Só aceita cliente da própria empresa (Rule::exists ignora o global scope).
+            'cliente_id' => [
+                'nullable',
+                Rule::exists('clientes', 'id')->where('company_id', app(CurrentCompany::class)->id()),
+            ],
         ];
     }
 

@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Support\CurrentCompany;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePromissoriaRequest extends FormRequest
 {
@@ -22,7 +24,13 @@ class StorePromissoriaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cliente_id' => 'required|exists:clientes,id',
+            // Rule::exists consulta a tabela crua e NÃO passa pelo global scope de
+            // Cliente: o filtro por empresa precisa ser explícito, senão seria possível
+            // vincular a promissória a um cliente de outra empresa.
+            'cliente_id' => [
+                'required',
+                Rule::exists('clientes', 'id')->where('company_id', app(CurrentCompany::class)->id()),
+            ],
             'valor' => 'required|numeric|min:0.01',
             'data_vencimento' => 'required|date|after_or_equal:today',
             'observacoes' => 'nullable|string|max:1000',

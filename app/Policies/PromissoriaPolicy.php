@@ -4,10 +4,13 @@ namespace App\Policies;
 
 use App\Models\Promissoria;
 use App\Models\User;
+use App\Policies\Concerns\ChecksCompanyOwnership;
 use Illuminate\Auth\Access\Response;
 
 class PromissoriaPolicy
 {
+    use ChecksCompanyOwnership;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -21,7 +24,8 @@ class PromissoriaPolicy
      */
     public function view(User $user, Promissoria $promissoria): bool
     {
-        return $user->hasRole(['admin', 'operador']);
+        return $user->hasRole(['admin', 'operador'])
+            && $this->mesmaEmpresa($user, $promissoria);
     }
 
     /**
@@ -37,7 +41,8 @@ class PromissoriaPolicy
      */
     public function update(User $user, Promissoria $promissoria): bool
     {
-        return $user->hasRole(['admin', 'operador']);
+        return $user->hasRole(['admin', 'operador'])
+            && $this->mesmaEmpresa($user, $promissoria);
     }
 
     /**
@@ -46,7 +51,7 @@ class PromissoriaPolicy
     public function delete(User $user, Promissoria $promissoria): bool|Response
     {
         // Apenas admin pode deletar
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('admin') && $this->mesmaEmpresa($user, $promissoria)) {
             return true;
         }
         return Response::deny('Você não tem permissão para excluir esta promissória.');
@@ -57,7 +62,8 @@ class PromissoriaPolicy
      */
     public function markAsPaid(User $user, Promissoria $promissoria): bool
     {
-        return $user->hasRole(['admin', 'operador']);
+        return $user->hasRole(['admin', 'operador'])
+            && $this->mesmaEmpresa($user, $promissoria);
     }
 
     /**
@@ -65,7 +71,8 @@ class PromissoriaPolicy
      */
     public function restore(User $user, Promissoria $promissoria): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole('admin')
+            && $this->mesmaEmpresa($user, $promissoria);
     }
 
     /**
@@ -73,6 +80,7 @@ class PromissoriaPolicy
      */
     public function forceDelete(User $user, Promissoria $promissoria): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole('admin')
+            && $this->mesmaEmpresa($user, $promissoria);
     }
 }

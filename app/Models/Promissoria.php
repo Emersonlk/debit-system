@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PromissoriaStatus;
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,10 +11,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Promissoria extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     protected $table = 'promissorias';
 
+    /**
+     * `company_id` fica deliberadamente fora: é definido pelo contexto de empresa
+     * (trait BelongsToCompany), nunca por dado vindo da requisição.
+     */
     protected $fillable = [
         'cliente_id',
         'valor',
