@@ -26,11 +26,6 @@ class PromissoriaService implements PromissoriaServiceInterface
         return $this->promissoriaRepository->paginate($filtros, $perPage);
     }
 
-    public function buscarPorId(int $id): ?Promissoria
-    {
-        return $this->promissoriaRepository->find($id);
-    }
-
     public function criar(CreatePromissoriaDTO $dto): Promissoria
     {
         return $this->promissoriaRepository->create($dto->toArray());

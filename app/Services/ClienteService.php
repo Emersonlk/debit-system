@@ -21,11 +21,6 @@ class ClienteService implements ClienteServiceInterface
         return $this->clienteRepository->paginate($perPage, $search, $sortBy, $sortOrder);
     }
 
-    public function buscarPorId(int $id): ?Cliente
-    {
-        return $this->clienteRepository->find($id);
-    }
-
     public function criar(CreateClienteDTO $dto): Cliente
     {
         $cliente = $this->clienteRepository->create($dto->toArray());

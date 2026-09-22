@@ -14,8 +14,6 @@ interface PromissoriaServiceInterface
 {
     public function listar(array $filtros = [], int $perPage = 15): LengthAwarePaginator;
 
-    public function buscarPorId(int $id): ?Promissoria;
-
     public function criar(CreatePromissoriaDTO $dto): Promissoria;
 
     public function atualizar(Promissoria $promissoria, UpdatePromissoriaDTO $dto): bool;

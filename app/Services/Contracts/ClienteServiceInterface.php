@@ -11,8 +11,6 @@ interface ClienteServiceInterface
 {
     public function listar(int $perPage = 15, ?string $search = null, ?string $sortBy = null, string $sortOrder = 'asc'): LengthAwarePaginator;
 
-    public function buscarPorId(int $id): ?Cliente;
-
     public function criar(CreateClienteDTO $dto): Cliente;
 
     public function atualizar(Cliente $cliente, UpdateClienteDTO $dto): bool;

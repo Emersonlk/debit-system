@@ -20,8 +20,6 @@ interface ClienteRepositoryInterface
     public function create(array $data): Cliente;
     public function update(Cliente $cliente, array $data): bool;
     public function delete(Cliente $cliente): bool;
-    public function findByEmail(string $email): ?Cliente;
-    public function findByCpf(string $cpf): ?Cliente;
 
     /**
      * Busca clientes por nome (busca parcial, case insensitive).

@@ -50,16 +50,6 @@ class ClienteRepository implements ClienteRepositoryInterface
         return $cliente->delete();
     }
 
-    public function findByEmail(string $email): ?Cliente
-    {
-        return $this->model->where('email', $email)->first();
-    }
-
-    public function findByCpf(string $cpf): ?Cliente
-    {
-        return $this->model->where('cpf', $cpf)->first();
-    }
-
     public function buscarPorNome(string $nome): \Illuminate\Database\Eloquent\Collection
     {
         return $this->model->where('nome', 'like', '%' . trim($nome) . '%')
