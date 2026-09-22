@@ -29,10 +29,13 @@ use App\Services\Dashboard\Metrics\RecebimentosPeriodoMetric;
 use App\Services\Dashboard\Metrics\ResumoVencimentoMetric;
 use App\Services\Dashboard\Metrics\UltimosPagamentosMetric;
 use App\Services\NotificacaoService;
+use App\Queue\TenantAwareCallQueuedHandler;
 use App\Services\PromissoriaImageExtractorService;
 use App\Services\PromissoriaService;
 use App\Support\CurrentCompany;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Queue\CallQueuedHandler;
+use Illuminate\Support\Facades\Queue;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -54,6 +57,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // Contexto de empresa (tenant): uma instância por requisição/job.
         $this->app->scoped(CurrentCompany::class);
+
+        // Jobs enfileirados restauram o contexto de empresa antes de desserializar.
+        $this->app->bind(CallQueuedHandler::class, TenantAwareCallQueuedHandler::class);
 
         // Bind Repositories
         $this->app->bind(ClienteRepositoryInterface::class, ClienteRepository::class);
@@ -86,5 +92,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
+        // Carimba a empresa atual no payload do job, para que o worker consiga
+        // restaurá-la depois. Sem contexto no enfileiramento, nada é carimbado — o
+        // job então falha ao tocar dados tenant-aware, em vez de rodar globalmente.
+        Queue::createPayloadUsing(function () {
+            $currentCompany = $this->app->make(CurrentCompany::class);
+
+            return $currentCompany->has()
+                ? ['company_id' => $currentCompany->id()]
+                : [];
+        });
     }
 }

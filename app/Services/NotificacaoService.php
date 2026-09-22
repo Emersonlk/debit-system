@@ -8,13 +8,35 @@ use App\Notifications\PromissoriaVencida;
 use App\Notifications\PromissoriaVencimentoProximo;
 use App\Repositories\Contracts\PromissoriaRepositoryInterface;
 use App\Services\Contracts\NotificacaoServiceInterface;
+use App\Support\CurrentCompany;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Opera sempre sobre a empresa do contexto atual — não conhece as demais.
+ *
+ * Quem percorre as empresas é o comando promissorias:verificar-vencimento, que
+ * estabelece o contexto de cada uma com CurrentCompany::runAs(). Chamado sem
+ * contexto, este serviço falha (fail-closed) em vez de processar tudo.
+ */
 class NotificacaoService implements NotificacaoServiceInterface
 {
     public function __construct(
-        private PromissoriaRepositoryInterface $promissoriaRepository
+        private PromissoriaRepositoryInterface $promissoriaRepository,
+        private CurrentCompany $currentCompany
     ) {
+    }
+
+    /**
+     * Usuários que devem receber as notificações: apenas os da empresa do contexto.
+     *
+     * Super Admin tem company_id nulo e, portanto, fica naturalmente de fora.
+     *
+     * @return Collection<int, User>
+     */
+    private function usuariosDaEmpresa(): Collection
+    {
+        return User::where('company_id', $this->currentCompany->id())->get();
     }
 
     /**
@@ -40,7 +62,7 @@ class NotificacaoService implements NotificacaoServiceInterface
             ];
         }
 
-        $usuarios = User::all();
+        $usuarios = $this->usuariosDaEmpresa();
 
         if ($usuarios->isEmpty()) {
             return [
@@ -99,7 +121,7 @@ class NotificacaoService implements NotificacaoServiceInterface
             ];
         }
 
-        $usuarios = User::all();
+        $usuarios = $this->usuariosDaEmpresa();
 
         if ($usuarios->isEmpty()) {
             return [

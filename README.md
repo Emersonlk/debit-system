@@ -188,6 +188,31 @@ QUEUE_CONNECTION=redis
 
 **Serviços no Docker:** `app`, `mysql`, `redis`, `queue`, `mailhog`.
 
+### ⚠️ Reinicie os workers após o deploy
+
+O worker de filas é um processo de longa duração: ele carrega a aplicação **uma vez**, ao
+iniciar, e mantém tudo em memória entre um job e outro. Código novo enviado no deploy **não
+é aplicado automaticamente** — o worker continua executando a versão que tinha quando subiu.
+
+Portanto, sempre que um deploy alterar **jobs, notificações enfileiradas, handlers de fila,
+service providers ou qualquer infraestrutura de filas**, os workers precisam ser
+reiniciados/recarregados.
+
+Duas formas comuns, conforme a infraestrutura de cada ambiente:
+
+```bash
+# Sinaliza para os workers encerrarem com elegância após o job atual;
+# o supervisor/orquestrador os sobe novamente já com o código novo.
+php artisan queue:restart
+
+# Ou reinicie diretamente o serviço/container do worker. No Docker deste projeto:
+docker compose restart queue
+```
+
+Sem isso, os jobs continuam sendo processados pelo código antigo — e podem falhar de forma
+silenciosa, já que a falha aparece apenas na tabela `failed_jobs`, e não na requisição que
+os enfileirou. Vale conferir `failed_jobs` após um deploy que mexa em filas.
+
 ### Comandos úteis
 ```bash
 # Logs da aplicação
