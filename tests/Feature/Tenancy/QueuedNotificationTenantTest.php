@@ -162,11 +162,36 @@ class QueuedNotificationTenantTest extends TestCase
 
     public function test_job_de_empresa_inexistente_falha_explicitamente(): void
     {
-        $empresa = Company::factory()->create(['name' => 'Empresa Temporária']);
-        $this->enfileirarNotificacao($empresa);
+        // A empresa que vai no payload precisa poder ser excluída, e a FK de
+        // company_id é RESTRICT: uma empresa com clientes/promissórias não é
+        // removível. Por isso os dados ficam numa empresa e o enfileiramento
+        // acontece no contexto de outra, vazia — que é a que some.
+        $empresaComDados = Company::factory()->create(['name' => 'Empresa com Dados']);
+        $empresaVazia = Company::factory()->create(['name' => 'Empresa Temporária']);
+
+        [$usuario, $promissoria] = $this->comoEmpresa($empresaComDados, fn () => [
+            User::factory()->create(['company_id' => $empresaComDados->id]),
+            Promissoria::with('cliente')->find(
+                Promissoria::factory()->create([
+                    'status' => PromissoriaStatus::PENDENTE->value,
+                    'data_vencimento' => now()->subDays(5)->format('Y-m-d'),
+                ])->id
+            ),
+        ]);
+
+        $this->comoEmpresa(
+            $empresaVazia,
+            fn () => $usuario->notify(new PromissoriaVencida($promissoria))
+        );
+
+        $this->assertSame(
+            $empresaVazia->id,
+            json_decode(DB::table('jobs')->first()->payload, true)['company_id'],
+            'O payload precisa carregar a empresa que será excluída.'
+        );
 
         // A empresa some depois do enfileiramento.
-        Company::whereKey($empresa->id)->delete();
+        Company::whereKey($empresaVazia->id)->delete();
 
         $this->processarFila();
 
