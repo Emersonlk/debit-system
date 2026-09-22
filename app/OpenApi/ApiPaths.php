@@ -50,13 +50,38 @@ class ApiPaths
     }
 
     #[OAT\Get(
+        path: '/dashboard',
+        summary: 'Dados do dashboard',
+        description: 'Métricas consolidadas da empresa do contexto. O intervalo do gráfico de '
+            . 'recebimentos vem de periodo; com periodo=personalizado, data_inicio e data_fim '
+            . 'passam a ser obrigatórios e o intervalo é limitado a 366 dias (inclusivo).',
+        tags: ['Dashboard'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OAT\QueryParameter(name: 'periodo', description: 'Intervalo do gráfico de recebimentos', required: false, schema: new OAT\Schema(type: 'string', default: '30', enum: ['hoje', '7', '30', 'personalizado'])),
+            new OAT\QueryParameter(name: 'dias', description: 'Dias considerados no resumo de vencimento (1 a 365)', required: false, schema: new OAT\Schema(type: 'integer', default: 3, minimum: 1, maximum: 365)),
+            new OAT\QueryParameter(name: 'data_inicio', description: 'Início do período personalizado (AAAA-MM-DD). Obrigatório quando periodo=personalizado.', required: false, schema: new OAT\Schema(type: 'string', format: 'date')),
+            new OAT\QueryParameter(name: 'data_fim', description: 'Fim do período personalizado (AAAA-MM-DD). Obrigatório quando periodo=personalizado; não pode ser anterior a data_inicio.', required: false, schema: new OAT\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [
+            new OAT\Response(response: 200, description: 'Métricas do dashboard'),
+            new OAT\Response(response: 401, description: 'Não autenticado'),
+            new OAT\Response(response: 403, description: 'Sem contexto de empresa ou sem permissão'),
+            new OAT\Response(response: 422, description: 'Erro de validação'),
+        ]
+    )]
+    public function dashboardIndex(): void
+    {
+    }
+
+    #[OAT\Get(
         path: '/clientes',
         summary: 'Listar clientes',
         description: 'Lista clientes com paginação. Use o parâmetro search para filtrar por nome.',
         tags: ['Clientes'],
         security: [['sanctum' => []]],
         parameters: [
-            new OAT\QueryParameter(name: 'per_page', description: 'Itens por página', required: false, example: 15),
+            new OAT\QueryParameter(name: 'per_page', description: 'Itens por página (1 a 100)', required: false, schema: new OAT\Schema(type: 'integer', default: 15, minimum: 1, maximum: 100)),
             new OAT\QueryParameter(name: 'search', description: 'Busca por nome (parte do nome)', required: false),
         ],
         responses: [
@@ -185,12 +210,12 @@ class ApiPaths
         tags: ['Promissórias'],
         security: [['sanctum' => []]],
         parameters: [
-            new OAT\QueryParameter(name: 'per_page', description: 'Itens por página', required: false),
+            new OAT\QueryParameter(name: 'per_page', description: 'Itens por página (1 a 100)', required: false, schema: new OAT\Schema(type: 'integer', default: 15, minimum: 1, maximum: 100)),
             new OAT\QueryParameter(name: 'status', description: 'Filtrar por status (pendente, paga, cancelada)', required: false),
             new OAT\QueryParameter(name: 'cliente_id', description: 'Filtrar por ID do cliente', required: false),
             new OAT\QueryParameter(name: 'vencidas', description: 'Apenas vencidas', required: false),
             new OAT\QueryParameter(name: 'proximas_vencimento', description: 'Próximas do vencimento', required: false),
-            new OAT\QueryParameter(name: 'dias', description: 'Dias para "próximas do vencimento"', required: false),
+            new OAT\QueryParameter(name: 'dias', description: 'Dias para "próximas do vencimento" (1 a 365)', required: false, schema: new OAT\Schema(type: 'integer', default: 3, minimum: 1, maximum: 365)),
         ],
         responses: [
             new OAT\Response(response: 200, description: 'Lista paginada de promissórias'),
@@ -400,7 +425,7 @@ class ApiPaths
         tags: ['Promissórias'],
         security: [['sanctum' => []]],
         parameters: [
-            new OAT\QueryParameter(name: 'dias', description: 'Quantidade de dias', required: false, example: 3),
+            new OAT\QueryParameter(name: 'dias', description: 'Quantidade de dias (1 a 365)', required: false, schema: new OAT\Schema(type: 'integer', default: 3, minimum: 1, maximum: 365)),
         ],
         responses: [
             new OAT\Response(response: 200, description: 'Resumo'),

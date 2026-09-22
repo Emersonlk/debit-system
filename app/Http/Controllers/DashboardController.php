@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DashboardRequest;
 use App\Models\Promissoria;
 use App\Services\Contracts\DashboardServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -14,7 +14,7 @@ class DashboardController extends Controller
     ) {
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(DashboardRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Promissoria::class);
 

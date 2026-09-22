@@ -40,6 +40,14 @@ class PromissoriaController extends Controller
     {
         $this->authorize('viewAny', Promissoria::class);
 
+        // per_page alimenta o LIMIT da consulta e dias alimenta o range de
+        // vencimento. Ambos são validados sempre que enviados, mesmo quando o
+        // filtro que os consome não está ativo.
+        $request->validate([
+            'per_page' => 'sometimes|integer|min:1|max:100',
+            'dias' => 'sometimes|integer|min:1|max:365',
+        ]);
+
         $perPage = (int) $request->get('per_page', 15);
         
         $filtros = [];
@@ -195,6 +203,12 @@ class PromissoriaController extends Controller
     public function resumoVencimento(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Promissoria::class);
+
+        // dias compõe a chave de cache deste endpoint, então valores arbitrários
+        // gerariam entradas distintas sem limite.
+        $request->validate([
+            'dias' => 'sometimes|integer|min:1|max:365',
+        ]);
 
         $dias = (int) $request->get('dias', 3);
         // A empresa faz parte da chave: o resumo é calculado sobre promissórias já

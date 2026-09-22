@@ -81,6 +81,85 @@
                 ]
             }
         },
+        "/dashboard": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Dados do dashboard",
+                "description": "Métricas consolidadas da empresa do contexto. O intervalo do gráfico de recebimentos vem de periodo; com periodo=personalizado, data_inicio e data_fim passam a ser obrigatórios e o intervalo é limitado a 366 dias (inclusivo).",
+                "operationId": "0f3da3d9fb4d8956ea7884935488ebf2",
+                "parameters": [
+                    {
+                        "name": "periodo",
+                        "in": "query",
+                        "description": "Intervalo do gráfico de recebimentos",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "30",
+                            "enum": [
+                                "hoje",
+                                "7",
+                                "30",
+                                "personalizado"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "dias",
+                        "in": "query",
+                        "description": "Dias considerados no resumo de vencimento (1 a 365)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 3,
+                            "maximum": 365,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "data_inicio",
+                        "in": "query",
+                        "description": "Início do período personalizado (AAAA-MM-DD). Obrigatório quando periodo=personalizado.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "data_fim",
+                        "in": "query",
+                        "description": "Fim do período personalizado (AAAA-MM-DD). Obrigatório quando periodo=personalizado; não pode ser anterior a data_inicio.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Métricas do dashboard"
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "403": {
+                        "description": "Sem contexto de empresa ou sem permissão"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/clientes": {
             "get": {
                 "tags": [
@@ -93,9 +172,14 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Itens por página",
+                        "description": "Itens por página (1 a 100)",
                         "required": false,
-                        "example": 15
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
                     },
                     {
                         "name": "search",
@@ -345,8 +429,14 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Itens por página",
-                        "required": false
+                        "description": "Itens por página (1 a 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
                     },
                     {
                         "name": "status",
@@ -375,8 +465,14 @@
                     {
                         "name": "dias",
                         "in": "query",
-                        "description": "Dias para \"próximas do vencimento\"",
-                        "required": false
+                        "description": "Dias para \"próximas do vencimento\" (1 a 365)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 3,
+                            "maximum": 365,
+                            "minimum": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -782,9 +878,14 @@
                     {
                         "name": "dias",
                         "in": "query",
-                        "description": "Quantidade de dias",
+                        "description": "Quantidade de dias (1 a 365)",
                         "required": false,
-                        "example": 3
+                        "schema": {
+                            "type": "integer",
+                            "default": 3,
+                            "maximum": 365,
+                            "minimum": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -815,6 +916,10 @@
         {
             "name": "Promissórias",
             "description": "CRUD e ações de promissórias"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard"
         }
     ],
     "components": {

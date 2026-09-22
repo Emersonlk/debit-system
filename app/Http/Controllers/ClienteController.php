@@ -25,6 +25,12 @@ class ClienteController extends Controller
     {
         $this->authorize('viewAny', Cliente::class);
 
+        // per_page alimenta o LIMIT da consulta: sem teto, um valor alto carrega a
+        // base inteira da empresa, e um negativo produz SQL inválido (HTTP 500).
+        $request->validate([
+            'per_page' => 'sometimes|integer|min:1|max:100',
+        ]);
+
         $perPage = (int) $request->get('per_page', 15);
         $search = $request->get('search');
         $sortBy = $request->get('sort_by');
