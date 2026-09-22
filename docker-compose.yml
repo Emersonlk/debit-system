@@ -13,6 +13,11 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      # Somente o app semeia. O queue compartilha este ENTRYPOINT e, sem esta
+      # variavel, nao executa db:seed — evitando as duas execucoes simultaneas
+      # que ja duplicaram os dados de demonstracao no ambiente local.
+      RUN_SEED: "true"
     depends_on:
       mysql:
         condition: service_healthy

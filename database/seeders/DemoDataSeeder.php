@@ -8,10 +8,13 @@ use App\Models\Company;
 use App\Models\HistoricoPagamento;
 use App\Models\Promissoria;
 use App\Support\CurrentCompany;
+use Database\Seeders\Concerns\ApenasEmAmbienteLocal;
 use Illuminate\Database\Seeder;
 
 class DemoDataSeeder extends Seeder
 {
+    use ApenasEmAmbienteLocal;
+
     /**
      * Dados de clientes para demonstração/testes (dashboard).
      */
@@ -43,6 +46,8 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->exigirAmbienteLocal();
+
         $this->command->info('Iniciando DemoDataSeeder...');
 
         $this->call([UserSeeder::class, RolePermissionSeeder::class]);

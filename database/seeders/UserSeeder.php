@@ -3,17 +3,21 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\Concerns\ApenasEmAmbienteLocal;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    use ApenasEmAmbienteLocal;
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
+        $this->exigirAmbienteLocal();
+
         // Verifica se o usuário já existe
         $adminUser = User::where('email', 'test@example.com')->first();
 
