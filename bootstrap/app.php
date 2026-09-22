@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'tenant' => \App\Http\Middleware\EnsureTenantContext::class,
+            // Aplicado só nas rotas de usuário do tenant; rotas futuras de Super Admin
+            // não o incluem, por isso a resolução escopada não é global.
+            'tenant.usuario' => \App\Http\Middleware\ResolveTenantUser::class,
         ]);
 
         // Ordem exigida: auth:sanctum -> tenant -> SubstituteBindings, para que o

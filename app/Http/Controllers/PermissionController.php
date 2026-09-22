@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\CurrentCompany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
@@ -10,14 +11,24 @@ use Spatie\Permission\Models\Role;
 
 class PermissionController extends Controller
 {
+    public function __construct(
+        private CurrentCompany $currentCompany
+    ) {
+    }
+
     /**
-     * Lista todos os usuários com suas roles e permissões
+     * Lista os usuários da empresa atual com suas roles e permissões
      */
     public function usuarios(Request $request): JsonResponse
     {
         $this->authorize('viewAny', User::class);
 
-        $usuarios = User::with('roles', 'permissions')->get();
+        // Filtro explícito: `viewAny` não recebe model, então a Policy não tem como
+        // isolar a listagem — e User não tem global scope. Usuários sem empresa
+        // (Super Admin, por exemplo) não casam com a comparação e ficam de fora.
+        $usuarios = User::where('company_id', $this->currentCompany->id())
+            ->with('roles', 'permissions')
+            ->get();
 
         $data = $usuarios->map(function ($usuario) {
             return [

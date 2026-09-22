@@ -34,9 +34,13 @@ Route::middleware(['auth:sanctum', 'throttle:60,1', 'tenant'])->group(function (
     Route::get('/permissoes/roles', [PermissionController::class, 'roles']);
     Route::get('/permissoes/permissoes', [PermissionController::class, 'permissoes']);
     Route::get('/permissoes/usuarios', [PermissionController::class, 'usuarios']);
-    Route::get('/permissoes/usuarios/{usuario}', [PermissionController::class, 'usuario']);
-    Route::post('/permissoes/usuarios/{usuario}/role', [PermissionController::class, 'atribuirRole']);
-    Route::delete('/permissoes/usuarios/{usuario}/role', [PermissionController::class, 'removerRole']);
-    Route::post('/permissoes/usuarios/{usuario}/permissao', [PermissionController::class, 'atribuirPermissao']);
-    Route::delete('/permissoes/usuarios/{usuario}/permissao', [PermissionController::class, 'removerPermissao']);
+    // {usuario} é resolvido dentro da empresa do contexto: usuário de outra empresa
+    // (ou sem empresa) responde 404, como Cliente e Promissória.
+    Route::middleware('tenant.usuario')->group(function () {
+        Route::get('/permissoes/usuarios/{usuario}', [PermissionController::class, 'usuario']);
+        Route::post('/permissoes/usuarios/{usuario}/role', [PermissionController::class, 'atribuirRole']);
+        Route::delete('/permissoes/usuarios/{usuario}/role', [PermissionController::class, 'removerRole']);
+        Route::post('/permissoes/usuarios/{usuario}/permissao', [PermissionController::class, 'atribuirPermissao']);
+        Route::delete('/permissoes/usuarios/{usuario}/permissao', [PermissionController::class, 'removerPermissao']);
+    });
 });
