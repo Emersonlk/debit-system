@@ -97,11 +97,88 @@ class PromissoriaRepository implements PromissoriaRepositoryInterface
 
     public function findVencidas(): Collection
     {
-        $hoje = now()->startOfDay();
-        return $this->model->with('cliente')
-            ->whereDate('data_vencimento', '<', $hoje)
-            ->whereNotIn('status', [PromissoriaStatus::PAGA->value, PromissoriaStatus::CANCELADA->value])
-            ->get();
+        return $this->queryVencidas()->get();
+    }
+
+    /**
+     * Base das vencidas, compartilhada pela versão que devolve a coleção inteira
+     * (dashboard) e pela que percorre em lotes (processamento de notificações).
+     */
+    private function queryVencidas(): \Illuminate\Database\Eloquent\Builder
+    {
+        return $this->model->newQuery()
+            ->with('cliente')
+            ->whereDate('data_vencimento', '<', now()->startOfDay())
+            ->whereNotIn('status', [PromissoriaStatus::PAGA->value, PromissoriaStatus::CANCELADA->value]);
+    }
+
+    private function queryProximasVencimento(int $dias): \Illuminate\Database\Eloquent\Builder
+    {
+        return $this->model->newQuery()
+            ->with('cliente')
+            ->where('status', PromissoriaStatus::PENDENTE->value)
+            ->where('data_vencimento', '>=', now()->format('Y-m-d'))
+            ->where('data_vencimento', '<=', now()->addDays($dias)->format('Y-m-d'));
+    }
+
+    // --------------------------------------------------- contagens no banco
+
+    public function contarVencidas(): int
+    {
+        return $this->queryVencidas()->count();
+    }
+
+    public function contarProximasVencimento(int $dias = 3): int
+    {
+        return $this->queryProximasVencimento($dias)->count();
+    }
+
+    public function contarNaoNotificadasProximasVencimento(int $dias = 3): int
+    {
+        return $this->queryProximasVencimento($dias)->where('notificado', false)->count();
+    }
+
+    // ------------------------------------------------- percurso em lotes
+    //
+    // chunkById e não chunk: o processamento marca `notificado` nas próprias linhas
+    // que está percorrendo, e o chunk por OFFSET encolheria o conjunto sob os pés,
+    // pulando registros silenciosamente. chunkById avança pela chave primária, então
+    // cada linha é visitada exatamente uma vez mesmo com o conjunto mudando.
+    //
+    // O global scope de empresa continua valendo em cada consulta de lote, portanto o
+    // percurso é tenant-aware como as versões que devolvem a coleção.
+
+    public function chunkVencidas(int $tamanho, callable $callback): void
+    {
+        $this->queryVencidas()->chunkById($tamanho, $callback);
+    }
+
+    public function chunkProximasVencimento(int $dias, int $tamanho, callable $callback): void
+    {
+        $this->queryProximasVencimento($dias)->chunkById($tamanho, $callback);
+    }
+
+    public function chunkNaoNotificadasProximasVencimento(int $dias, int $tamanho, callable $callback): void
+    {
+        $this->queryProximasVencimento($dias)->where('notificado', false)->chunkById($tamanho, $callback);
+    }
+
+    /**
+     * Marca um conjunto de promissórias como notificadas numa única consulta.
+     *
+     * Substitui o UPDATE por registro que o serviço fazia dentro do laço — eram
+     * 2.000 consultas para 2.000 promissórias. A semântica não muda: só entram aqui
+     * os ids cuja notificação foi enviada sem erro.
+     *
+     * @param  list<int>  $ids
+     */
+    public function marcarComoNotificadas(array $ids): int
+    {
+        if ($ids === []) {
+            return 0;
+        }
+
+        return $this->model->newQuery()->whereKey($ids)->update(['notificado' => true]);
     }
 
     public function findNaoNotificadasProximasVencimento(int $dias = 3): Collection
